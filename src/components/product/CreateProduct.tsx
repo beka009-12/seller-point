@@ -1,10 +1,11 @@
 "use client";
-import { type FC, useState } from "react";
+import { FC, useState } from "react";
 import scss from "./CreateProduct.module.scss";
 import { useForm } from "react-hook-form";
-import { useCreateProduct } from "@/api/product";
+import { useCreateProduct } from "@/api/user";
+import toast from "react-hot-toast";
 
-interface FormData {
+interface FormFields {
   category: string;
   brand: string;
   title: string;
@@ -16,7 +17,6 @@ interface FormData {
   stockCount: number;
   inStock: boolean;
   tags: string;
-  images: FileList;
 }
 
 const CreateProduct: FC = () => {
@@ -24,61 +24,90 @@ const CreateProduct: FC = () => {
     register,
     handleSubmit,
     reset,
-    control,
     formState: { errors },
-  } = useForm<FormData>();
+  } = useForm<FormFields>();
   const { mutate: createProduct, isPending, error } = useCreateProduct();
-  const [previewImages, setPreviewImages] = useState<string[]>([]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+  // превью картинок
+  const handleFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
+    if (files && files.length > 0) {
+      setSelectedFiles(Array.from(files));
+
       const previews = Array.from(files).map((file) =>
         URL.createObjectURL(file)
       );
       setPreviewImages(previews);
+    } else {
+      setSelectedFiles([]);
+      setPreviewImages([]);
     }
   };
 
-  const onSubmit = (data: FormData) => {
-    const formData = {
-      category: data.category,
-      brand: data.brand,
-      title: data.title,
-      description: data.description,
-      sizes: data.sizes
-        ? data.sizes
+  const onSubmit = (data: FormFields) => {
+    const formData = new FormData();
+
+    let Bool = (val: any) => (val === "true" || val === true ? true : false);
+
+    formData.append("category", data.category);
+    formData.append("brand", data.brand);
+    formData.append("title", data.title);
+    formData.append("description", data.description);
+    formData.append("price", String(data.price));
+    if (data.newPrice) formData.append("newPrice", String(data.newPrice));
+    formData.append("stockCount", String(data.stockCount));
+    data.inStock = Bool(data.inStock);
+
+    if (data.sizes)
+      formData.append(
+        "sizes",
+        JSON.stringify(
+          data.sizes
             .split(",")
             .map((s) => s.trim())
-            .filter((s) => s)
-        : [],
-      colors: data.colors
-        ? data.colors
+            .filter(Boolean)
+        )
+      );
+
+    if (data.colors)
+      formData.append(
+        "colors",
+        JSON.stringify(
+          data.colors
             .split(",")
             .map((c) => c.trim())
-            .filter((c) => c)
-        : [],
-      price: Number(data.price),
-      newPrice: data.newPrice ? Number(data.newPrice) : undefined,
-      stockCount: Number(data.stockCount),
-      inStock: data.inStock,
-      tags: data.tags
-        ? data.tags
+            .filter(Boolean)
+        )
+      );
+
+    if (data.tags)
+      formData.append(
+        "tags",
+        JSON.stringify(
+          data.tags
             .split(",")
             .map((t) => t.trim())
-            .filter((t) => t)
-        : [],
-      images: data.images ? Array.from(data.images) : [],
-    };
+            .filter(Boolean)
+        )
+      );
+
+    // добавляем файлы
+    selectedFiles.forEach((file) => {
+      formData.append("files", file);
+    });
 
     createProduct(formData, {
       onSuccess: () => {
-        alert("Товар успешно создан!");
+        toast.success("Товар успешно создан");
         reset();
+        setSelectedFiles([]);
         setPreviewImages([]);
       },
-      onError: (error) => {
-        alert(`Ошибка: ${error.message}`);
+      onError: (err) => {
+        toast.error("Ошибка при создании товара");
       },
     });
   };
@@ -98,11 +127,7 @@ const CreateProduct: FC = () => {
                 {...register("category", { required: "Категория обязательна" })}
                 className={errors.category ? scss.error : ""}
               />
-              {errors.category && (
-                <span className={scss.errorText}>
-                  {errors.category.message}
-                </span>
-              )}
+              {errors.category && <span>{errors.category.message}</span>}
             </div>
 
             <div className={scss.formGroup}>
@@ -113,9 +138,7 @@ const CreateProduct: FC = () => {
                 {...register("brand", { required: "Бренд обязателен" })}
                 className={errors.brand ? scss.error : ""}
               />
-              {errors.brand && (
-                <span className={scss.errorText}>{errors.brand.message}</span>
-              )}
+              {errors.brand && <span>{errors.brand.message}</span>}
             </div>
 
             <div className={scss.formGroup}>
@@ -126,9 +149,7 @@ const CreateProduct: FC = () => {
                 {...register("title", { required: "Название обязательно" })}
                 className={errors.title ? scss.error : ""}
               />
-              {errors.title && (
-                <span className={scss.errorText}>{errors.title.message}</span>
-              )}
+              {errors.title && <span>{errors.title.message}</span>}
             </div>
 
             <div className={scss.formGroup}>
@@ -141,11 +162,7 @@ const CreateProduct: FC = () => {
                 })}
                 className={errors.description ? scss.error : ""}
               />
-              {errors.description && (
-                <span className={scss.errorText}>
-                  {errors.description.message}
-                </span>
-              )}
+              {errors.description && <span>{errors.description.message}</span>}
             </div>
 
             <div className={scss.formRow}>
@@ -163,8 +180,8 @@ const CreateProduct: FC = () => {
                 <label htmlFor="colors">Цвета (через запятую)</label>
                 <input
                   id="colors"
-                  type="text"
-                  placeholder="Красный, Синий, Зеленый"
+                  type="color"
+                  placeholder="Красный, Синий"
                   {...register("colors")}
                 />
               </div>
@@ -178,18 +195,10 @@ const CreateProduct: FC = () => {
                   type="number"
                   step="0.01"
                   min="0"
-                  {...register("price", {
-                    required: "Цена обязательна",
-                    min: {
-                      value: 0,
-                      message: "Цена не может быть отрицательной",
-                    },
-                  })}
+                  {...register("price", { required: "Цена обязательна" })}
                   className={errors.price ? scss.error : ""}
                 />
-                {errors.price && (
-                  <span className={scss.errorText}>{errors.price.message}</span>
-                )}
+                {errors.price && <span>{errors.price.message}</span>}
               </div>
 
               <div className={scss.formGroup}>
@@ -199,19 +208,8 @@ const CreateProduct: FC = () => {
                   type="number"
                   step="0.01"
                   min="0"
-                  {...register("newPrice", {
-                    min: {
-                      value: 0,
-                      message: "Цена не может быть отрицательной",
-                    },
-                  })}
-                  className={errors.newPrice ? scss.error : ""}
+                  {...register("newPrice")}
                 />
-                {errors.newPrice && (
-                  <span className={scss.errorText}>
-                    {errors.newPrice.message}
-                  </span>
-                )}
               </div>
             </div>
 
@@ -223,23 +221,19 @@ const CreateProduct: FC = () => {
                   type="number"
                   min="0"
                   defaultValue={0}
-                  {...register("stockCount", {
-                    min: {
-                      value: 0,
-                      message: "Количество не может быть отрицательным",
-                    },
-                  })}
-                  className={errors.stockCount ? scss.error : ""}
+                  {...register("stockCount")}
                 />
-                {errors.stockCount && (
-                  <span className={scss.errorText}>
-                    {errors.stockCount.message}
-                  </span>
-                )}
               </div>
 
               <div className={scss.formGroup}>
-                <label className={scss.checkboxLabel}>В наличии</label>
+                <label>
+                  <input
+                    type="checkbox"
+                    {...register("inStock")}
+                    defaultChecked
+                  />
+                  В наличии
+                </label>
               </div>
             </div>
 
@@ -248,26 +242,26 @@ const CreateProduct: FC = () => {
               <input
                 id="tags"
                 type="text"
-                placeholder="новинка, популярное, акция"
+                placeholder="новинка, акция"
                 {...register("tags")}
               />
             </div>
 
+            {/* Файлы */}
             <div className={scss.formGroup}>
-              <label htmlFor="images">Изображения товара</label>
+              <label htmlFor="files">Фото товара</label>
               <input
-                id="images"
+                id="files"
                 type="file"
                 multiple
                 accept="image/*"
-                {...register("images")}
-                onChange={handleImageChange}
+                onChange={handleFilesChange}
               />
 
               {previewImages.length > 0 && (
                 <div className={scss.imagePreview}>
                   {previewImages.map((src, index) => (
-                    <img key={index} src={src} alt={`Превью ${index + 1}`} />
+                    <img key={index} src={src} alt={`preview-${index}`} />
                   ))}
                 </div>
               )}
@@ -282,19 +276,15 @@ const CreateProduct: FC = () => {
                 type="button"
                 onClick={() => {
                   reset();
+                  setSelectedFiles([]);
                   setPreviewImages([]);
                 }}
-                className={scss.resetButton}
                 disabled={isPending}
               >
                 Очистить
               </button>
 
-              <button
-                type="submit"
-                className={scss.submitButton}
-                disabled={isPending}
-              >
+              <button type="submit" disabled={isPending}>
                 {isPending ? "Создание..." : "Создать товар"}
               </button>
             </div>

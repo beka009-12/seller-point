@@ -14,7 +14,6 @@
     flex: 1;
     display: flex;
     min-height: 100dvh;
-    padding-inline: 10px;
     flex-direction: column;
     margin-left: 300px;
     transition: margin-left 0.3s ease;
@@ -51,11 +50,15 @@
     }
   }
 }
-// App.module.scss или глобально
 .fadeInUp {
+  margin: 40px 20px 20px 0;
   opacity: 0;
   transform: translateY(20px);
-  animation: fadeInUp 0.6s ease-out forwards; // forwards чтобы сохранить конечное состояние
+  animation: fadeInUp 0.6s ease-out forwards;
+
+  @media (max-width: 768px) {
+    margin: 20px 10px 10px 10px;
+  }
 }
 
 @keyframes fadeInUp {

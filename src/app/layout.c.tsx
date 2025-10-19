@@ -2,6 +2,7 @@
 import { Provider } from "@/provider/Provider";
 import { ReactNode, FC, Suspense } from "react";
 import { Toaster } from "react-hot-toast";
+import GlobalLoader from "./GlobalLoader";
 
 interface ILay {
   children: ReactNode;

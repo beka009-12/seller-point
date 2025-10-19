@@ -3,8 +3,6 @@ import { type FC, ReactNode, useEffect, useState } from "react";
 import scss from "./Layout.module.scss";
 import { useRouter } from "next/navigation";
 import SideBar from "../pages/sideBar/SideBar";
-import Header from "./header/Header";
-import { motion } from "framer-motion";
 
 interface ILay {
   children: ReactNode;
@@ -52,7 +50,6 @@ const Layout: FC<ILay> = ({ children }) => {
         }`}
       >
         <div className={scss.fadeInUp}>
-          <Header />
           <main>{children}</main>
         </div>
       </div>

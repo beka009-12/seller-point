@@ -1,5 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "..";
+
+// ==================== AUTH HOOKS ====================
 
 const useSignUp = () => {
   return useMutation<AUTH.SignUpRes, Error, AUTH.SignUpReq>({
@@ -29,10 +31,27 @@ const useGetMe = () => {
   return useQuery<AUTH.MeRes, Error>({
     queryKey: ["me"],
     queryFn: async () => {
-      const response = await api.get("/saller/saller-profile");
+      const response = await api.get<AUTH.MeRes>("/saller/saller-profile");
       return response.data;
     },
   });
 };
 
-export { useSignUp, useSignIn, useGetMe };
+// ==================== PRODUCT HOOKS ====================
+
+const useCreateProduct = () => {
+  return useMutation<PRODUCT.CreateProductRes, Error, FormData>({
+    mutationFn: async (formData) => {
+      const response = await api.post<PRODUCT.CreateProductRes>(
+        "/commodity/create-product",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+      return response.data;
+    },
+  });
+};
+
+export { useSignUp, useSignIn, useGetMe, useCreateProduct };
