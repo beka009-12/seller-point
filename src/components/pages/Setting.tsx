@@ -1,5 +1,5 @@
 import React from "react";
-import CreateProduct from "../product/CreateProduct";
+import SettingPage from "./settingSections/SettingPage";
 
-const Setting = () => <CreateProduct />;
+const Setting = () => <SettingPage />;
 export default Setting;

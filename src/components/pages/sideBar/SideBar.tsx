@@ -2,7 +2,7 @@
 import { useState, useEffect, type FC } from "react";
 import scss from "./SideBar.module.scss";
 import { SideBarIcons } from "@/utils/sideBarIcons/Icons";
-import { usePathname, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 
 interface SideBarProps {
   onToggle?: (collapsed: boolean) => void;

@@ -1,8 +1,26 @@
+interface Category {
+  id: number;
+  name: string;
+  parentId?: number | null;
+  parent?: Category | null;
+  children?: Category[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Brand {
+  id: number;
+  name: string;
+  logoUrl: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface Product {
   id: number;
   shopId: number;
-  category: string;
-  brand: string;
+  categoryId: Category;
+  brandId: Brand;
   title: string;
   description: string;
   images: string[];
@@ -11,7 +29,6 @@ interface Product {
   price: number;
   newPrice?: number | null;
   stockCount: number;
-  inStock: boolean;
   tags: string[];
   createdAt: string;
 }
@@ -65,22 +82,36 @@ namespace AUTH {
 // todo Prodcut types
 namespace PRODUCT {
   type CreateProductRes = {
-    message: string;
-    product: Product;
+    id: number;
+    shopId: number;
+    categoryId: Category;
+    brandId: Brand;
+    title: string;
+    description: string;
+    images: string[];
+    sizes: string[];
+    colors: string[];
+    price: number;
+    newPrice?: number | null;
+    stockCount: number;
+    tags: string[];
+    createdAt: string;
   };
 
   type CreateProductReq = {
-    category: string;
-    brand: string;
+    id: number;
+    shopId: number;
+    categoryId: Category;
+    brandId: Brand;
     title: string;
     description: string;
-    sizes?: string[];
-    colors?: string[];
+    images: string[];
+    sizes: string[];
+    colors: string[];
     price: number;
-    newPrice?: number;
-    stockCount?: number;
-    inStock?: boolean;
-    tags?: string[];
-    images?: string[];
+    newPrice?: number | null;
+    stockCount: number;
+    tags: string[];
+    createdAt: string;
   };
 }

@@ -2,8 +2,10 @@
 import { type FC, useState } from "react";
 import scss from "./Home.module.scss";
 import CountUp from "@/utils/anim/CountUp";
+import { useRouter } from "next/navigation";
 
 const Home: FC = () => {
+  const router = useRouter();
   return (
     <section className={scss.Home}>
       <div className="container">
@@ -116,13 +118,14 @@ const Home: FC = () => {
             </div>
           </div>
 
-          {/* Основной контент */}
           <div className={scss.mainContent}>
-            {/* Быстрые действия */}
             <div className={scss.quickActions}>
               <h2>Быстрые действия</h2>
               <div className={scss.actions}>
-                <button className={scss.btnPrimary}>
+                <button
+                  onClick={() => router.push("/product-creation")}
+                  className={scss.btnPrimary}
+                >
                   <svg
                     viewBox="0 0 24 24"
                     fill="none"
