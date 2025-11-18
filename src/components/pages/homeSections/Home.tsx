@@ -1,5 +1,5 @@
 "use client";
-import { type FC, useState } from "react";
+import { type FC } from "react";
 import scss from "./Home.module.scss";
 import CountUp from "@/utils/anim/CountUp";
 import { useRouter } from "next/navigation";

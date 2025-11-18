@@ -8,6 +8,7 @@ import {
   useGetBrands,
 } from "@/api/product";
 import { useForm } from "react-hook-form";
+import Image from "next/image";
 
 interface ProductUpdate {
   categoryId: number;
@@ -72,18 +73,6 @@ const Product: FC = () => {
     refetch();
   };
 
-  const handleToggleStock = async (id: number, currentValue: boolean) => {
-    try {
-      await updateProduct({
-        id,
-        data: { inStock: !currentValue } as ProductUpdate,
-      });
-      refetch();
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   // Подготавливаем категории с иерархией
   const parentCategories =
     categoriesData?.categories.filter((c) => !c.parentId) || [];
@@ -97,7 +86,7 @@ const Product: FC = () => {
           {products?.map((item) => (
             <div key={item.id} className={scss.card}>
               <div className={scss.imageWrapper}>
-                <img src={item.images?.[0]} alt={item.title} />
+                <Image src={item.images?.[0]} alt={item.title} />
               </div>
               <h3>{item.title}</h3>
               {item.newPrice ? (
