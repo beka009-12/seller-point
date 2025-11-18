@@ -22,7 +22,7 @@ interface ProductUpdate {
   price: number;
   newPrice?: number | null;
   stockCount: number;
-  inStock: boolean;
+  inStock?: boolean;
   tags: string[];
   isArchived?: boolean;
   archivedAt?: string | null;
@@ -42,9 +42,10 @@ const Product: FC = () => {
     useForm<ProductUpdate>();
   const watchTags = watch("tags") || [];
 
-  const openEditModal = (product: any) => {
+  const openEditModal = (product: ProductUpdate) => {
     setEditingProduct(product);
     reset({
+      id: product.id,
       categoryId: product.categoryId,
       brandId: product.brandId,
       title: product.title,
@@ -53,12 +54,12 @@ const Product: FC = () => {
       sizes: product.sizes || [],
       colors: product.colors || [],
       price: product.price,
-      newPrice: product.newPrice,
+      newPrice: product.newPrice ?? null,
       stockCount: product.stockCount,
       inStock: product.inStock,
       tags: product.tags || [],
-      isArchived: product.isArchived || false,
-      archivedAt: product.archivedAt || null,
+      isArchived: product.isArchived ?? false,
+      archivedAt: product.archivedAt ?? null,
     });
   };
 
@@ -76,7 +77,6 @@ const Product: FC = () => {
     refetch();
   };
 
-  // Подготавливаем категории с иерархией
   const parentCategories =
     categoriesData?.categories.filter((c) => !c.parentId) || [];
   const childCategories =
@@ -89,15 +89,21 @@ const Product: FC = () => {
           {products?.map((item) => (
             <div key={item.id} className={scss.card}>
               <div className={scss.imageWrapper}>
-                <Image src={item.images?.[0]} alt={item.title} />
+                {item.images?.[0] && (
+                  <Image
+                    src={item.images[0]}
+                    alt={item.title}
+                    width={200}
+                    height={200}
+                    className={scss.productImage}
+                  />
+                )}
               </div>
               <h3>{item.title}</h3>
-              {item.newPrice ? (
-                <p>Цена: {item.newPrice}</p>
-              ) : (
-                <p>Цена: {item.price} сом</p>
-              )}
-              <button onClick={() => openEditModal(item)}>Редактировать</button>
+              <p>Цена: {item.newPrice ?? item.price} сом</p>
+              <button type="button" onClick={() => openEditModal(item)}>
+                Редактировать
+              </button>
             </div>
           ))}
         </div>
@@ -107,12 +113,8 @@ const Product: FC = () => {
             <div className={scss.modal}>
               <h2>Редактировать товар</h2>
               <form onSubmit={handleSubmit(onSubmit)}>
-                {/* Category */}
                 <label>Категория</label>
-                <select
-                  {...register("categoryId", { required: true })}
-                  defaultValue={editingProduct.categoryId}
-                >
+                <select {...register("categoryId", { required: true })}>
                   {parentCategories.map((parent) => (
                     <option key={parent.id} value={parent.id}>
                       {parent.name}
@@ -130,12 +132,8 @@ const Product: FC = () => {
                   })}
                 </select>
 
-                {/* Brand */}
                 <label>Бренд</label>
-                <select
-                  {...register("brandId", { required: true })}
-                  defaultValue={editingProduct.brandId}
-                >
+                <select {...register("brandId", { required: true })}>
                   {brandsData?.map((brand) => (
                     <option key={brand.id} value={brand.id}>
                       {brand.name}
@@ -143,7 +141,6 @@ const Product: FC = () => {
                   ))}
                 </select>
 
-                {/* Остальные поля */}
                 <label>Название</label>
                 <input {...register("title", { required: true })} />
 

@@ -173,8 +173,8 @@ const CreateProduct: FC = () => {
       await createProduct(formData);
       toast.success("Товар создан!");
       resetForm();
-    } catch (err: any) {
-      toast.error(err?.message || "Ошибка");
+    } catch (error) {
+      toast.error(`${error}`);
     }
   };
 
