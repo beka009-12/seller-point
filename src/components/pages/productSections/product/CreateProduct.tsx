@@ -1,10 +1,12 @@
 "use client";
+
 import { FC, useState, useEffect, useMemo } from "react";
 import scss from "./CreateProduct.module.scss";
 import { useForm } from "react-hook-form";
 import { useCreateProduct } from "@/api/user";
 import toast from "react-hot-toast";
 import { useGetBrands, useGetCategories } from "@/api/product";
+import { Upload, ArrowLeft, ArrowRight, Check, X, Package } from "lucide-react";
 
 interface FormFields {
   parentCategoryId: number;
@@ -12,8 +14,6 @@ interface FormFields {
   brandId: number;
   title: string;
   description: string;
-  sizes: string[];
-  colors: string[];
   price: number;
   newPrice?: number;
   stockCount: number;
@@ -21,656 +21,421 @@ interface FormFields {
 }
 
 const CreateProduct: FC = () => {
+  const [step, setStep] = useState(1);
+  const totalSteps = 8;
+
   const {
     register,
     handleSubmit,
-    reset,
     watch,
-    formState: { errors },
     setValue,
+    trigger,
+    getValues,
+    formState: { errors },
+    reset,
   } = useForm<FormFields>({
     defaultValues: {
+      parentCategoryId: 0,
+      categoryId: 0,
+      brandId: 0,
+      price: 0,
       stockCount: 0,
-      sizes: [],
-      colors: [],
     },
   });
 
   const { mutateAsync: createProduct, isPending } = useCreateProduct();
   const { data: categoriesData } = useGetCategories();
-  const { data: brandsData, isLoading: isBrandsLoading } = useGetBrands();
+  const { data: brandsData } = useGetBrands();
 
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [customSize, setCustomSize] = useState<string>("");
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
-  const [customColor, setCustomColor] = useState<string>("");
-  const [showSubcategoryDropdown, setShowSubcategoryDropdown] = useState(false);
 
   const parentCategoryId = watch("parentCategoryId");
   const categoryId = watch("categoryId");
 
-  // Мемоизация категорий
   const parentCategories = useMemo(
-    () => categoriesData?.categories.filter((cat) => !cat.parentId) || [],
+    () => categoriesData?.categories.filter((c) => !c.parentId) || [],
     [categoriesData]
   );
-
   const subCategories = useMemo(
     () =>
       categoriesData?.categories.filter(
-        (cat) => cat.parentId === parentCategoryId
+        (c) => c.parentId === parentCategoryId
       ) || [],
     [categoriesData, parentCategoryId]
   );
 
-  // Определение типа категории
   const isShoeCategory = useMemo(() => {
-    const category = subCategories.find((cat) => cat.id === categoryId);
-    return category?.name.toLowerCase().includes("обувь") || false;
+    const cat = subCategories.find((c) => c.id === categoryId);
+    return cat?.name.toLowerCase().includes("обувь");
   }, [subCategories, categoryId]);
 
-  // Доступные размеры
-  const availableSizes = useMemo(() => {
-    const clothingSizes = ["XS", "S", "M", "L", "XL", "XXL"];
-    const shoeSizes = Array.from({ length: 13 }, (_, i) => (35 + i).toString());
-    return isShoeCategory ? shoeSizes : clothingSizes;
-  }, [isShoeCategory]);
+  const availableSizes = isShoeCategory
+    ? Array.from({ length: 16 }, (_, i) => (34 + i).toString())
+    : ["XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL"];
 
-  const predefinedColors = [
-    { name: "Красный", value: "#FF0000" },
-    { name: "Синий", value: "#0000FF" },
-    { name: "Зелёный", value: "#008000" },
-    { name: "Чёрный", value: "#000000" },
-    { name: "Белый", value: "#FFFFFF" },
-    { name: "Жёлтый", value: "#FFD700" },
-    { name: "Розовый", value: "#FFC0CB" },
-    { name: "Серый", value: "#808080" },
+  const colors = [
+    { name: "Белый", hex: "#FFFFFF" },
+    { name: "Чёрный", hex: "#000000" },
+    { name: "Серый", hex: "#6B7280" },
+    { name: "Красный", hex: "#EF4444" },
+    { name: "Оранжевый", hex: "#fb4517" },
+    { name: "Синий", hex: "#3B82F6" },
+    { name: "Зелёный", hex: "#10B981" },
+    { name: "Жёлтый", hex: "#F59E0B" },
+    { name: "Розовый", hex: "#EC4899" },
   ];
 
-  // Сброс подкатегории при смене родительской категории
-  useEffect(() => {
-    if (parentCategoryId) {
-      setValue("categoryId", 0);
-    }
-  }, [parentCategoryId, setValue]);
+  useEffect(() => setValue("categoryId", 0), [parentCategoryId, setValue]);
 
-  // Обработка файлов
   const handleFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files || files.length === 0) {
-      setSelectedFiles([]);
-      setPreviewImages([]);
-      return;
+    if (!files?.length) return;
+
+    const valid = Array.from(files).filter((f) => f.size <= 5 * 1024 * 1024);
+    if (valid.length < files.length) toast.error("Некоторые файлы > 5МБ");
+
+    setSelectedFiles((p) => [...p, ...valid]);
+    setPreviewImages((p) => [
+      ...p,
+      ...valid.map((f) => URL.createObjectURL(f)),
+    ]);
+  };
+
+  const removeImage = (i: number) => {
+    URL.revokeObjectURL(previewImages[i]);
+    setPreviewImages((p) => p.filter((_, idx) => idx !== i));
+    setSelectedFiles((p) => p.filter((_, idx) => idx !== i));
+  };
+
+  const validateStep = async () => {
+    switch (step) {
+      case 1:
+        return (
+          selectedFiles.length > 0 || (toast.error("Добавьте фото"), false)
+        );
+      case 2:
+        return (
+          parentCategoryId > 0 || (toast.error("Выберите категорию"), false)
+        );
+      case 3:
+        return categoryId > 0 || (toast.error("Выберите подкатегорию"), false);
+      case 4:
+        return (
+          getValues("brandId") > 0 || (toast.error("Выберите бренд"), false)
+        );
+      case 5:
+        return await trigger(["title", "description"]);
+      case 6:
+        return (
+          (selectedSizes.length > 0 && selectedColors.length > 0) ||
+          (toast.error("Выберите размеры и цвета"), false)
+        );
+      case 7:
+        const ok = await trigger(["price", "stockCount"]);
+        if (!ok) return false;
+        if (getValues("newPrice")) {
+          toast.error("Цена со скидкой должна быть ниже");
+          return false;
+        }
+        return true;
+      default:
+        return true;
     }
-
-    const validFiles = Array.from(files).filter((file) => {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`Файл ${file.name} слишком большой (максимум 5 МБ)`);
-        return false;
-      }
-      return true;
-    });
-
-    setSelectedFiles(validFiles);
-    const previews = validFiles.map((file) => URL.createObjectURL(file));
-    setPreviewImages(previews);
   };
 
-  // Удаление изображения
-  const handleRemoveImage = (index: number) => {
-    setPreviewImages((prev) => prev.filter((_, i) => i !== index));
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  const next = async () => {
+    if (await validateStep()) setStep((s) => Math.min(s + 1, totalSteps));
   };
+  const back = () => setStep((s) => Math.max(s - 1, 1));
 
-  // Обработка размеров
-  const handleSizeToggle = (size: string) => {
-    setSelectedSizes((prev) =>
-      prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
-    );
-  };
-
-  // Добавление кастомного размера
-  const handleAddCustomSize = () => {
-    const trimmedSize = customSize.trim();
-    if (!trimmedSize) {
-      toast.error("Введите размер");
-      return;
-    }
-    if (selectedSizes.includes(trimmedSize)) {
-      toast.error("Этот размер уже добавлен");
-      return;
-    }
-    setSelectedSizes([...selectedSizes, trimmedSize]);
-    setCustomSize("");
-    toast.success("Размер добавлен");
-  };
-
-  // Обработка цветов
-  const handleColorToggle = (colorName: string) => {
-    setSelectedColors((prev) =>
-      prev.includes(colorName)
-        ? prev.filter((c) => c !== colorName)
-        : [...prev, colorName]
-    );
-  };
-
-  // Добавление кастомного цвета
-  const handleAddCustomColor = () => {
-    const trimmedColor = customColor.trim();
-    if (!trimmedColor) {
-      toast.error("Введите название цвета");
-      return;
-    }
-    if (selectedColors.includes(trimmedColor)) {
-      toast.error("Этот цвет уже добавлен");
-      return;
-    }
-    setSelectedColors([...selectedColors, trimmedColor]);
-    setCustomColor("");
-    toast.success("Цвет добавлен");
-  };
-
-  // Отправка формы
   const onSubmit = async (data: FormFields) => {
-    // Валидация
-    if (!data.parentCategoryId) {
-      toast.error("Выберите родительскую категорию");
-      return;
-    }
-    if (!data.categoryId) {
-      toast.error("Выберите подкатегорию");
-      return;
-    }
-    if (selectedSizes.length === 0) {
-      toast.error("Выберите хотя бы один размер");
-      return;
-    }
-    if (selectedColors.length === 0) {
-      toast.error("Выберите хотя бы один цвет");
-      return;
-    }
-    if (selectedFiles.length === 0) {
-      toast.error("Добавьте хотя бы одно изображение товара");
-      return;
-    }
+    if (!(await validateStep())) return;
 
     const formData = new FormData();
-
-    // Основные поля
     formData.append("categoryId", String(data.categoryId));
     formData.append("brandId", String(data.brandId));
     formData.append("title", data.title.trim());
     formData.append("description", data.description.trim());
     formData.append("price", String(data.price));
-
-    if (data.newPrice && data.newPrice > 0) {
-      if (data.newPrice >= data.price) {
-        toast.error("Новая цена должна быть меньше старой");
-        return;
-      }
-      formData.append("newPrice", String(data.newPrice));
-    }
-
+    if (data.newPrice) formData.append("newPrice", String(data.newPrice));
     formData.append("stockCount", String(data.stockCount));
-
-    // Размеры и цвета
     formData.append("sizes", JSON.stringify(selectedSizes));
     formData.append("colors", JSON.stringify(selectedColors));
-
-    // Теги
-    if (data.tags?.trim()) {
-      const tagsArray = data.tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean);
-      formData.append("tags", JSON.stringify(tagsArray));
-    }
-
-    // Файлы
-    selectedFiles.forEach((file) => {
-      formData.append("files", file);
-    });
+    if (data.tags)
+      formData.append(
+        "tags",
+        JSON.stringify(
+          data.tags
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean)
+        )
+      );
+    selectedFiles.forEach((f) => formData.append("files", f));
 
     try {
       await createProduct(formData);
-      toast.success("Товар успешно создан!");
-      handleResetForm();
-    } catch (error: any) {
-      toast.error(error?.message || "Ошибка при создании товара");
+      toast.success("Товар создан!");
+      resetForm();
+    } catch (err: any) {
+      toast.error(err?.message || "Ошибка");
     }
   };
 
-  // Полный сброс формы
-  const handleResetForm = () => {
+  const resetForm = () => {
     reset();
-    setSelectedFiles([]);
+    previewImages.forEach(URL.revokeObjectURL);
     setPreviewImages([]);
+    setSelectedFiles([]);
     setSelectedSizes([]);
     setSelectedColors([]);
-    setCustomSize("");
-    setCustomColor("");
-    setShowSubcategoryDropdown(false);
+    setStep(1);
   };
 
-  // Очистка URL объектов при размонтировании
-  useEffect(() => {
-    return () => {
-      previewImages.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [previewImages]);
+  const progress = (step / totalSteps) * 100;
 
   return (
-    <section className={scss.CreateProduct}>
+    <section className={scss.createProduct}>
       <div className={scss.container}>
-        <div className={scss.content}>
-          <h1>Создание товара</h1>
-
-          <form onSubmit={handleSubmit(onSubmit)} className={scss.form}>
-            {/* Родительская категория */}
-            <div className={scss.formGroup}>
-              <label>Родительская категория *</label>
-              <div className={scss.parentCategoryButtons}>
-                {parentCategories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    className={
-                      parentCategoryId === cat.id ? scss.activeParent : ""
-                    }
-                    onClick={() => setValue("parentCategoryId", cat.id)}
-                    disabled={isPending}
-                  >
-                    {cat.name}
-                  </button>
-                ))}
-              </div>
-              {errors.parentCategoryId && (
-                <span className={scss.errorText}>
-                  {errors.parentCategoryId.message}
-                </span>
-              )}
+        {/* Header */}
+        <div className={scss.header}>
+          <h1>Создать товар</h1>
+          <div className={scss.progressWrapper}>
+            <div className={scss.progressBar}>
+              <div
+                className={scss.progressFill}
+                style={{ width: `${progress}%` }}
+              />
             </div>
+            <span className={scss.stepCounter}>
+              Шаг {step} из {totalSteps}
+            </span>
+          </div>
+        </div>
 
-            {/* Подкатегория */}
-            {parentCategoryId > 0 && (
-              <div className={scss.formGroup}>
-                <label>Подкатегория *</label>
-                <div
-                  className={`${scss.customSelect} ${
-                    showSubcategoryDropdown ? scss.open : ""
-                  }`}
-                >
-                  <div
-                    className={`${scss.selectHeader} ${
-                      categoryId ? scss.active : ""
-                    }`}
-                    onClick={() =>
-                      !isPending && setShowSubcategoryDropdown((prev) => !prev)
-                    }
-                  >
-                    <span>
-                      {subCategories.find((c) => c.id === categoryId)?.name ||
-                        "Выберите подкатегорию"}
-                    </span>
-                    <div className={scss.arrow}></div>
+        <form onSubmit={handleSubmit(onSubmit)} className={scss.form}>
+          <div className={scss.stepContent}>
+            {/* ШАГ 1 — Фото */}
+            {step === 1 && (
+              <div className={scss.uploadStep}>
+                <Package className={scss.icon} />
+                <h2>Загрузите фото товара</h2>
+                <p>Первое фото будет главным на карточке</p>
+
+                <label className={scss.uploadArea}>
+                  <Upload className={scss.uploadIcon} />
+                  <span>Перетащите фото сюда или нажмите</span>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleFilesChange}
+                  />
+                </label>
+
+                {previewImages.length > 0 && (
+                  <div className={scss.gallery}>
+                    {previewImages.map((src, i) => (
+                      <div key={i} className={scss.imageCard}>
+                        {i === 0 && (
+                          <span className={scss.mainBadge}>Главное</span>
+                        )}
+                        <img src={src} alt="" />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(i)}
+                          className={scss.removeBtn}
+                        >
+                          <X />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-
-                  {showSubcategoryDropdown && (
-                    <div className={`${scss.dropdown} ${scss.open}`}>
-                      {subCategories.length > 0 ? (
-                        subCategories.map((cat) => (
-                          <div
-                            key={cat.id}
-                            className={`${scss.dropdownItem} ${
-                              categoryId === cat.id ? scss.selected : ""
-                            }`}
-                            onClick={() => {
-                              setValue("categoryId", cat.id);
-                              setShowSubcategoryDropdown(false);
-                            }}
-                          >
-                            {cat.name}
-                          </div>
-                        ))
-                      ) : (
-                        <div className={scss.dropdownItem}>
-                          Нет подкатегорий
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                {errors.categoryId && (
-                  <span className={scss.errorText}>
-                    {errors.categoryId.message}
-                  </span>
                 )}
               </div>
             )}
 
-            {/* Бренд */}
-            <div className={scss.formGroup}>
-              <label htmlFor="brandId">Бренд *</label>
-              <select
-                id="brandId"
-                {...register("brandId", {
-                  required: "Выберите бренд",
-                  valueAsNumber: true,
-                })}
-                className={errors.brandId ? scss.error : ""}
-                disabled={isBrandsLoading || isPending}
-              >
-                <option value="">Выберите бренд</option>
-                {brandsData?.map((brand) => (
-                  <option key={brand.id} value={brand.id}>
-                    {brand.name}
-                  </option>
-                ))}
-              </select>
-              {errors.brandId && (
-                <span className={scss.errorText}>{errors.brandId.message}</span>
-              )}
-            </div>
-
-            {/* Название */}
-            <div className={scss.formGroup}>
-              <label htmlFor="title">Название товара *</label>
-              <input
-                id="title"
-                type="text"
-                placeholder="Введите название товара"
-                {...register("title", {
-                  required: "Название обязательно",
-                  minLength: { value: 3, message: "Минимум 3 символа" },
-                  maxLength: { value: 200, message: "Максимум 200 символов" },
-                })}
-                className={errors.title ? scss.error : ""}
-                disabled={isPending}
-              />
-              {errors.title && (
-                <span className={scss.errorText}>{errors.title.message}</span>
-              )}
-            </div>
-
-            {/* Описание */}
-            <div className={scss.formGroup}>
-              <label htmlFor="description">Описание *</label>
-              <textarea
-                id="description"
-                rows={5}
-                placeholder="Подробное описание товара..."
-                {...register("description", {
-                  required: "Описание обязательно",
-                  minLength: { value: 20, message: "Минимум 20 символов" },
-                  maxLength: { value: 2000, message: "Максимум 2000 символов" },
-                })}
-                className={errors.description ? scss.error : ""}
-                disabled={isPending}
-              />
-              {errors.description && (
-                <span className={scss.errorText}>
-                  {errors.description.message}
-                </span>
-              )}
-            </div>
-
-            {/* Размеры */}
-            <div className={scss.formGroup}>
-              <label>Размеры *</label>
-              <div className={scss.sizeSelector}>
-                {availableSizes.map((size) => (
-                  <label
-                    key={size}
-                    className={`${scss.checkboxLabel} ${
-                      selectedSizes.includes(size) ? scss.selected : ""
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedSizes.includes(size)}
-                      onChange={() => handleSizeToggle(size)}
-                      disabled={isPending}
-                    />
-                    {size}
-                  </label>
-                ))}
-              </div>
-              <div className={scss.customColor}>
-                <input
-                  type="text"
-                  placeholder="Добавить свой размер"
-                  value={customSize}
-                  onChange={(e) => setCustomSize(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" &&
-                    (e.preventDefault(), handleAddCustomSize())
-                  }
-                  disabled={isPending}
-                />
-                <button
-                  type="button"
-                  onClick={handleAddCustomSize}
-                  disabled={isPending || !customSize.trim()}
-                  className={scss.addColorButton}
-                >
-                  Добавить
-                </button>
-              </div>
-              {selectedSizes.length === 0 && (
-                <span className={scss.errorText}>
-                  Выберите хотя бы один размер
-                </span>
-              )}
-              {selectedSizes.length > 0 && (
-                <div className={scss.selectedColors}>
-                  Выбрано размеров: {selectedSizes.join(", ")}
-                </div>
-              )}
-            </div>
-
-            {/* Цвета */}
-            <div className={scss.formGroup}>
-              <label>Цвета *</label>
-              <div className={scss.colorSelector}>
-                {predefinedColors.map((color) => (
-                  <label
-                    key={color.name}
-                    className={`${scss.checkboxLabel} ${
-                      selectedColors.includes(color.name) ? scss.selected : ""
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedColors.includes(color.name)}
-                      onChange={() => handleColorToggle(color.value)}
-                      disabled={isPending}
-                    />
-                    <span
-                      className={scss.colorBox}
-                      style={{ backgroundColor: color.value }}
-                    ></span>
-                    {color.name}
-                  </label>
-                ))}
-              </div>
-              <div className={scss.customColor}>
-                <input
-                  type="text"
-                  placeholder="Добавить свой цвет"
-                  value={customColor}
-                  onChange={(e) => setCustomColor(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" &&
-                    (e.preventDefault(), handleAddCustomColor())
-                  }
-                  disabled={isPending}
-                />
-                <button
-                  type="button"
-                  onClick={handleAddCustomColor}
-                  disabled={isPending || !customColor.trim()}
-                  className={scss.addColorButton}
-                >
-                  Добавить
-                </button>
-              </div>
-              {selectedColors.length === 0 && (
-                <span className={scss.errorText}>
-                  Выберите хотя бы один цвет
-                </span>
-              )}
-              {selectedColors.length > 0 && (
-                <div className={scss.selectedColors}>
-                  Выбрано цветов: {selectedColors.join(", ")}
-                </div>
-              )}
-            </div>
-
-            {/* Цены */}
-            <div className={scss.formRow}>
-              <div className={scss.formGroup}>
-                <label htmlFor="price">Цена * (сом)</label>
-                <input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0.00"
-                  {...register("price", {
-                    required: "Цена обязательна",
-                    min: {
-                      value: 0,
-                      message: "Цена не может быть отрицательной",
-                    },
-                    valueAsNumber: true,
-                  })}
-                  className={errors.price ? scss.error : ""}
-                  disabled={isPending}
-                />
-                {errors.price && (
-                  <span className={scss.errorText}>{errors.price.message}</span>
-                )}
-              </div>
-
-              <div className={scss.formGroup}>
-                <label htmlFor="newPrice">Цена со скидкой (сом)</label>
-                <input
-                  id="newPrice"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0.00"
-                  {...register("newPrice", {
-                    min: {
-                      value: 0,
-                      message: "Цена не может быть отрицательной",
-                    },
-                    valueAsNumber: true,
-                  })}
-                  className={errors.newPrice ? scss.error : ""}
-                  disabled={isPending}
-                />
-                {errors.newPrice && (
-                  <span className={scss.errorText}>
-                    {errors.newPrice.message}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Остаток и наличие */}
-            <div className={scss.formRow}>
-              <div className={scss.formGroup}>
-                <label htmlFor="stockCount">Количество на складе</label>
-                <input
-                  id="stockCount"
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  {...register("stockCount", {
-                    min: {
-                      value: 0,
-                      message: "Количество не может быть отрицательным",
-                    },
-                    valueAsNumber: true,
-                  })}
-                  className={errors.stockCount ? scss.error : ""}
-                  disabled={isPending}
-                />
-                {errors.stockCount && (
-                  <span className={scss.errorText}>
-                    {errors.stockCount.message}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Теги */}
-            <div className={scss.formGroup}>
-              <label htmlFor="tags">Теги (через запятую)</label>
-              <input
-                id="tags"
-                type="text"
-                placeholder="новинка, акция, хит продаж"
-                {...register("tags")}
-                disabled={isPending}
-              />
-            </div>
-
-            {/* Фото */}
-            <div className={scss.formGroup}>
-              <label htmlFor="files">Фото товара *</label>
-              <input
-                id="files"
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleFilesChange}
-                disabled={isPending}
-              />
-              {previewImages.length > 0 && (
-                <div className={scss.imagePreview}>
-                  {previewImages.map((src, index) => (
-                    <div key={index} className={scss.imageWrapper}>
-                      <img src={src} alt={`preview-${index}`} />
-                      <button
-                        type="button"
-                        className={scss.removeImageButton}
-                        onClick={() => handleRemoveImage(index)}
-                        disabled={isPending}
-                        title="Удалить изображение"
-                      >
-                        ×
-                      </button>
-                    </div>
+            {/* Остальные шаги */}
+            {step === 2 && (
+              <div className={scss.categoryStep}>
+                <h2>Выберите родительскую категорию</h2>
+                <div className={scss.categoryGrid}>
+                  {parentCategories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      className={parentCategoryId === cat.id ? scss.active : ""}
+                      onClick={() => setValue("parentCategoryId", cat.id)}
+                    >
+                      {cat.name}
+                    </button>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {step === 3 && parentCategoryId && (
+              <div className={scss.categoryStep}>
+                <h2>Выберите подкатегорию</h2>
+                <div className={scss.categoryGrid}>
+                  {subCategories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      className={categoryId === cat.id ? scss.active : ""}
+                      onClick={() => setValue("categoryId", cat.id)}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {step === 4 && (
+              <div className={scss.selectStep}>
+                <h2>Бренд</h2>
+                <select
+                  {...register("brandId", { valueAsNumber: true })}
+                  className={scss.select}
+                >
+                  <option value={0}>— Выберите бренд —</option>
+                  {brandsData?.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {step === 5 && (
+              <div className={scss.textStep}>
+                <h2>Название и описание</h2>
+                <input
+                  {...register("title", { required: true, minLength: 3 })}
+                  placeholder="Кроссовки Nike Air Max..."
+                />
+                <textarea
+                  {...register("description", {
+                    required: true,
+                    minLength: 20,
+                  })}
+                  rows={6}
+                  placeholder="Подробное описание..."
+                />
+              </div>
+            )}
+
+            {step === 6 && (
+              <div className={scss.sizesColorsStep}>
+                <h2>Размеры и цвета</h2>
+                <div className={scss.section}>
+                  <h3>Размеры</h3>
+                  <div className={scss.chips}>
+                    {availableSizes.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        className={selectedSizes.includes(s) ? scss.active : ""}
+                        onClick={() =>
+                          setSelectedSizes((p) =>
+                            p.includes(s) ? p.filter((x) => x !== s) : [...p, s]
+                          )
+                        }
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className={scss.section}>
+                  <h3>Цвета</h3>
+                  <div className={scss.colorChips}>
+                    {colors.map((c) => (
+                      <button
+                        key={c.name}
+                        type="button"
+                        className={
+                          selectedColors.includes(c.name) ? scss.active : ""
+                        }
+                        onClick={() =>
+                          setSelectedColors((p) =>
+                            p.includes(c.name)
+                              ? p.filter((x) => x !== c.name)
+                              : [...p, c.name]
+                          )
+                        }
+                      >
+                        <span style={{ backgroundColor: c.hex }} />
+                        {c.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {step === 7 && (
+              <div className={scss.priceStep}>
+                <h2>Цена и количество</h2>
+                <input
+                  type="number"
+                  {...register("price", {
+                    valueAsNumber: true,
+                    required: true,
+                  })}
+                  placeholder="Цена (сом)"
+                />
+                <input
+                  type="number"
+                  {...register("newPrice", { valueAsNumber: true })}
+                  placeholder="Цена со скидкой (необязательно)"
+                />
+                <input
+                  type="number"
+                  {...register("stockCount", { valueAsNumber: true })}
+                  placeholder="Количество на складе"
+                />
+              </div>
+            )}
+
+            {step === 8 && (
+              <div className={scss.finalStep}>
+                <Check className={scss.successIcon} />
+                <h2>Готово к публикации!</h2>
+                <p>Проверьте данные и нажмите «Создать товар»</p>
+              </div>
+            )}
+          </div>
+
+          {/* Навигация */}
+          <div className={scss.actions}>
+            {step > 1 && (
+              <button type="button" onClick={back} className={scss.backBtn}>
+                <ArrowLeft /> Назад
+              </button>
+            )}
+            <div className={scss.rightActions}>
+              {step === totalSteps ? (
+                <button
+                  type="submit"
+                  disabled={isPending}
+                  className={scss.submitBtn}
+                >
+                  {!isPending ? "Создаём..." : "Создать товар"}
+                </button>
+              ) : (
+                <button type="button" onClick={next} className={scss.nextBtn}>
+                  Далее <ArrowRight className={scss.arrows} />
+                </button>
               )}
             </div>
-
-            {/* Кнопки действий */}
-            <div className={scss.formActions}>
-              <button
-                type="button"
-                className={scss.resetButton}
-                onClick={handleResetForm}
-                disabled={isPending}
-              >
-                Очистить форму
-              </button>
-
-              <button
-                type="submit"
-                className={scss.submitButton}
-                disabled={isPending}
-              >
-                {isPending ? "Создание..." : "Создать товар"}
-              </button>
-            </div>
-          </form>
-        </div>
+          </div>
+        </form>
       </div>
     </section>
   );

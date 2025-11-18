@@ -21,7 +21,6 @@ interface GetCategoriesResponse {
   categories: Category[];
 }
 
-// todo Product
 const useGetProduct = () => {
   return useQuery<GETPRODUCT.useGetproductRes, GETPRODUCT.useGetproductReq>({
     queryKey: ["products"],
@@ -32,7 +31,6 @@ const useGetProduct = () => {
   });
 };
 
-// todo Creategory
 const useGetCategories = () => {
   return useQuery<GetCategoriesResponse>({
     queryKey: ["get-categories"],
@@ -43,7 +41,6 @@ const useGetCategories = () => {
   });
 };
 
-// todo Brand
 const useGetBrands = () => {
   return useQuery<GETPRODUCT.useGetBrandsRes, GETPRODUCT.useGetBrandsReq>({
     queryKey: ["brand"],
@@ -54,11 +51,10 @@ const useGetBrands = () => {
   });
 };
 
-// todo Updte
 const useUpdateProduct = () => {
   return useMutation<
     GETPRODUCT.useUpdateProductRes,
-    Error, //
+    Error,
     GETPRODUCT.useUpdateProductReq
   >({
     mutationFn: async ({ id, data }) => {

@@ -7,7 +7,6 @@ interface Category {
   createdAt: string;
   updatedAt: string;
 }
-
 interface Brand {
   id: number;
   name: string;
@@ -15,7 +14,6 @@ interface Brand {
   createdAt: string;
   updatedAt: string;
 }
-
 interface ProductUpdate {
   categoryId: number;
   brandId: number;
@@ -33,9 +31,7 @@ interface ProductUpdate {
   isArchived?: boolean;
   archivedAt?: string | null;
 }
-
 namespace GETPRODUCT {
-  // ! Brand
   type useGetBrandsRes = {
     id: number;
     name: string;
@@ -44,8 +40,6 @@ namespace GETPRODUCT {
     updatedAt: string;
   }[];
   type useGetBrandsReq = void;
-
-  // ! Product
   type useGetproductRes = {
     id: number;
     shopId: number;
@@ -66,7 +60,6 @@ namespace GETPRODUCT {
     archivedAt?: string | null;
   }[];
   type useGetproductReq = void;
-
   type useUpdateProductRes = {
     id: number;
     shopId: number;
@@ -86,8 +79,5 @@ namespace GETPRODUCT {
     isArchived?: boolean;
     archivedAt?: string | null;
   }[];
-  type useUpdateProductReq = {
-    id: number;
-    data: Partial<ProductUpdate>;
-  };
+  type useUpdateProductReq = { id: number; data: Partial<ProductUpdate> };
 }

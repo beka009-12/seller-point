@@ -1,473 +1,392 @@
-.CreateProduct {
-  padding: 2rem 0;
-  min-height: 100vh;
-  background-color: #f4f6f8;
+.createProduct {
+  padding: 40px 0;
+  display: flex;
+  justify-content: center;
 
-  .content {
-    max-width: 850px;
-    margin: 0 auto;
-    background: #ffffff;
-    padding: 2.5rem;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-
-    h1 {
-      text-align: center;
-      color: #222;
-      margin-bottom: 2rem;
-      font-size: 2.2rem;
-      font-weight: 700;
-    }
+  .container {
+    width: 100%;
+    max-width: 900px;
   }
+}
 
-  .form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.8rem;
-  }
+/* HEADER */
+.header {
+  margin-bottom: 30px;
 
-  .formGroup {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-
-    label {
-      font-weight: 600;
-      color: #333;
-      font-size: 0.95rem;
-    }
-
-    input,
-    textarea {
-      padding: 0.75rem 1rem;
-      border: 2px solid #d3d6db;
-      border-radius: 10px;
-      font-size: 1rem;
-      transition: all 0.25s ease;
-
-      &:focus {
-        outline: none;
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-      }
-
-      &.error {
-        border-color: #ef4444;
-      }
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 120px;
-    }
-
-    input[type="file"] {
-      padding: 0.5rem;
-      border: 2px dashed #d3d6db;
-      background-color: #fafafa;
-      cursor: pointer;
-      transition: all 0.3s;
-
-      &:hover {
-        border-color: #3b82f6;
-        background-color: #f0f7ff;
-      }
-    }
-  }
-
-  .formRow {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.2rem;
-
-    @media (max-width: 768px) {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  .parentCategoryButtons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 0.5rem;
-
-    button {
-      padding: 0.65rem 1.4rem;
-      border: 2px solid #d3d6db;
-      border-radius: 14px;
-      background: #fff;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.95rem;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
-      min-width: 100px;
-
-      &:hover:not(.activeParent) {
-        border-color: #3b82f6;
-        background: #f0f7ff;
-        transform: translateY(-2px);
-        box-shadow: 0 3px 10px rgba(59, 130, 246, 0.15);
-      }
-
-      &.activeParent {
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
-        color: #fff;
-        border-color: #3b82f6;
-        box-shadow: 0 6px 18px rgba(59, 130, 246, 0.3);
-        transform: translateY(-2px);
-
-        &::after {
-          position: absolute;
-          top: 4px;
-          right: 8px;
-          font-weight: bold;
-          font-size: 0.9rem;
-        }
-      }
-
-      &:active {
-        transform: translateY(0);
-      }
-    }
-  }
-
-  // === КАСТОМНЫЙ ДРОПДАУН ===
-  .customSelect {
-    position: relative;
-    margin-top: 0.5rem;
-
-    .selectHeader {
-      padding: 0.75rem 1rem;
-      border: 2px solid #d3d6db;
-      border-radius: 12px;
-      background: #fff;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: 600;
-      transition: all 0.25s ease;
-      min-height: 48px;
-
-      &:hover {
-        border-color: #3b82f6;
-        background: #f0f7ff;
-      }
-
-      &.active {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-      }
-    }
-
-    .arrow {
-      width: 0;
-      height: 0;
-      border-left: 6px solid transparent;
-      border-right: 6px solid transparent;
-      border-top: 6px solid #6b7280;
-      transition: transform 0.25s ease;
-    }
-
-    &.open .arrow {
-      transform: rotate(180deg);
-      border-top: none;
-      border-bottom: 6px solid #3b82f6;
-    }
-
-    .dropdown {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: #fff;
-      border: 2px solid #3b82f6;
-      border-radius: 12px;
-      margin-top: 0.5rem;
-      max-height: 220px;
-      overflow-y: auto;
-      z-index: 20;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
-      opacity: 0;
-      visibility: hidden;
-      transform: translateY(-8px);
-      transition: all 0.25s ease;
-
-      &.open {
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(0);
-      }
-
-      .dropdownItem {
-        padding: 0.75rem 1rem;
-        cursor: pointer;
-        font-weight: 500;
-        transition: all 0.2s;
-        position: relative;
-
-        &:hover {
-          background: #f0f7ff;
-          padding-left: 1.5rem;
-        }
-
-        &.selected {
-          background: #3b82f6;
-          color: #fff;
-          font-weight: 600;
-
-          &::after {
-            position: absolute;
-            right: 1rem;
-            font-weight: bold;
-          }
-        }
-      }
-    }
-  }
-
-  // === РАЗМЕРЫ (кнопки) ===
-  .sizeSelector {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.6rem;
-    margin-top: 0.5rem;
-
-    label {
-      padding: 0.5rem 1rem;
-      border: 2px solid #d3d6db;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.95rem;
-      transition: all 0.25s ease;
-      min-width: 50px;
-      text-align: center;
-      position: relative;
-
-      input {
-        display: none;
-      }
-
-      &:hover:not(.selected) {
-        border-color: #3b82f6;
-        background: #f0f7ff;
-        transform: translateY(-2px);
-        box-shadow: 0 3px 8px rgba(59, 130, 246, 0.15);
-      }
-
-      &.selected {
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
-        color: #fff;
-        border-color: #3b82f6;
-        box-shadow: 0 5px 14px rgba(59, 130, 246, 0.3);
-        transform: translateY(-2px);
-
-        &::after {
-          position: absolute;
-          top: 2px;
-          right: 6px;
-          font-size: 0.8rem;
-          font-weight: bold;
-        }
-      }
-    }
-  }
-
-  // === ЦВЕТА (кнопки) ===
-  .colorSelector {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.6rem;
-    margin-top: 0.5rem;
-
-    label {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 0.9rem;
-      border: 2px solid #d3d6db;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.9rem;
-      transition: all 0.25s ease;
-      min-width: 100px;
-      position: relative;
-
-      input {
-        display: none;
-      }
-
-      .colorBox {
-        width: 20px;
-        height: 20px;
-        border-radius: 6px;
-        border: 2px solid #fff;
-        box-shadow: 0 0 0 1px #d3d6db;
-        flex-shrink: 0;
-      }
-
-      &.selected {
-        border-color: #3b82f6;
-        background: #f0f7ff;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
-        transform: translateY(-2px);
-        text-decoration: none;
-
-        .colorBox {
-          box-shadow: 0 0 0 2px #3b82f6, 0 0 0 4px white;
-        }
-
-        &::after {
-          position: absolute;
-          top: 4px;
-          right: 8px;
-          color: #3b82f6;
-          font-weight: bold;
-          font-size: 0.8rem;
-        }
-      }
-    }
-  }
-
-  // === Пользовательские поля ===
-  .customInput,
-  .customColor input {
-    margin-top: 0.75rem;
-    padding: 0.75rem 1rem;
-    border: 2px dashed #d3d6db;
-    border-radius: 12px;
-    background: #fafafa;
-    font-size: 0.95rem;
-    transition: all 0.25s ease;
-
-    &:focus {
-      border-color: #3b82f6;
-      background: #fff;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-    }
-  }
-
-  .addColorButton {
-    margin-top: 0.75rem;
-    padding: 0.75rem 1.2rem;
-    background: #10b981;
-    color: white;
-    border: none;
-    border-radius: 10px;
+  h1 {
+    font-size: 28px;
+    margin-bottom: 15px;
     font-weight: 600;
-    cursor: pointer;
-    transition: all 0.25s;
+  }
 
-    &:hover:not(:disabled) {
-      background: #059669;
-      transform: translateY(-1px);
+  .progressWrapper {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .progressBar {
+    flex: 1;
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .progressFill {
+    height: 100%;
+    background: #4f46e5;
+    transition: width 0.35s ease;
+  }
+
+  .stepCounter {
+    font-size: 14px;
+    color: #6b7280;
+  }
+}
+
+/* FORM WRAPPER */
+.form {
+  background: #fff;
+  padding: 30px;
+  border-radius: 18px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* UNIVERSAL STEP AREA */
+.stepContent {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  h2 {
+    font-size: 22px;
+    margin-bottom: 5px;
+    font-weight: 600;
+  }
+
+  p {
+    color: #6b7280;
+  }
+}
+
+/* UPLOAD STEP */
+.uploadStep {
+  text-align: center;
+
+  .icon {
+    width: 50px;
+    height: 50px;
+    color: #4f46e5;
+    margin-bottom: 15px;
+  }
+
+  .uploadArea {
+    margin-top: 15px;
+    border: 2px dashed #cbd5e1;
+    padding: 35px;
+    border-radius: 15px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    transition: 0.25s ease;
+
+    &:hover {
+      border-color: #4f46e5;
+      background: #f8f9ff;
     }
 
-    &:disabled {
-      background: #9ca3af;
-      cursor: not-allowed;
+    input {
+      display: none;
+    }
+
+    .uploadIcon {
+      width: 36px;
+      height: 36px;
+      color: #4f46e5;
     }
   }
 
-  .imagePreview {
+  .gallery {
+    margin-top: 25px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 1rem;
-    margin-top: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 15px;
+  }
+
+  .imageCard {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 
     img {
       width: 100%;
-      height: 100px;
+      height: 130px;
       object-fit: cover;
-      border-radius: 10px;
-      border: 2px solid #d3d6db;
-      transition: transform 0.2s;
+    }
+
+    .mainBadge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: #4f46e5;
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: white;
+    }
+
+    .removeBtn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(0, 0, 0, 0.45);
+      border-radius: 50%;
+      padding: 4px;
+      color: white;
+      border: none;
+      cursor: pointer;
+
+      svg {
+        width: 16px;
+        height: 16px;
+      }
 
       &:hover {
-        transform: scale(1.05);
+        background: rgba(0, 0, 0, 0.65);
       }
     }
   }
+}
 
-  .errorText {
-    color: #ef4444;
-    font-size: 0.85rem;
-    margin-top: 0.25rem;
+/* CATEGORY SELECT */
+.categoryStep {
+  .categoryGrid {
+    margin-top: 20px;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   }
 
-  .formActions {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-    margin-top: 2rem;
-    padding-top: 2rem;
-    border-top: 1px solid #e0e0e0;
+  button {
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #d1d5db;
+    background: white;
+    font-weight: 500;
+    transition: 0.25s ease;
 
-    @media (max-width: 768px) {
-      flex-direction: column;
+    &:hover {
+      border-color: #4f46e5;
+      background: #f0f2ff;
     }
   }
 
-  .resetButton,
-  .submitButton {
-    padding: 0.75rem 2rem;
-    border: none;
+  .active {
+    background: #4f46e5;
+    color: white;
+    border-color: #4f46e5;
+  }
+}
+
+/* BRAND */
+.selectStep {
+  select {
+    padding: 12px;
     border-radius: 10px;
-    font-size: 1rem;
-    font-weight: 600;
+    border: 1px solid #d1d5db;
+    font-size: 15px;
+    transition: 0.25s ease;
+
+    &:focus {
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    }
+  }
+}
+
+/* TEXT STEP */
+.textStep {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+
+  input,
+  textarea {
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #d1d5db;
+    transition: 0.25s ease;
+
+    &:focus {
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    }
+  }
+}
+
+/* SIZES + COLORS */
+.sizesColorsStep {
+  .section {
+    margin-top: 20px;
+
+    h3 {
+      font-size: 16px;
+      margin-bottom: 10px;
+      color: #374151;
+    }
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    button {
+      padding: 8px 14px;
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
+      background: white;
+      cursor: pointer;
+      transition: 0.25s ease;
+
+      &:hover {
+        border-color: #4f46e5;
+      }
+    }
+
+    .active {
+      background: #4f46e5;
+      color: white;
+      border-color: #4f46e5;
+    }
+  }
+
+  .colorChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    button {
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      transition: 0.25s ease;
+
+      span {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+      }
+
+      &:hover {
+        border-color: #4f46e5;
+      }
+    }
+
+    .active {
+      background: #4f46e5;
+      color: white;
+
+      span {
+        border-color: rgba(255, 255, 255, 0.7);
+      }
+    }
+  }
+}
+
+/* PRICE STEP */
+.priceStep {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+
+  input {
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #d1d5db;
+    transition: 0.25s;
+
+    &:focus {
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    }
+  }
+}
+
+/* FINAL STEP */
+.finalStep {
+  text-align: center;
+
+  .successIcon {
+    width: 60px;
+    height: 60px;
+    color: #10b981;
+    margin-bottom: 15px;
+  }
+}
+
+/* ACTIONS */
+.actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.25s;
+    transition: 0.25s;
 
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+    svg {
+      width: 18px;
+      height: 18px;
     }
   }
 
-  .resetButton {
-    background-color: #6b7280;
+  .arrows {
+    stroke: #fff;
+  }
+
+  .backBtn {
+    background: #e5e7eb;
+
+    &:hover {
+      background: #d1d5db;
+    }
+  }
+
+  .nextBtn {
+    background: #fe623c;
     color: white;
 
-    &:hover:not(:disabled) {
-      background-color: #4b5563;
-      transform: translateY(-2px);
+    &:hover {
+      background: #ff5c33;
     }
   }
 
-  .submitButton {
-    background-color: #3b82f6;
+  .submitBtn {
+    background: #10b981;
     color: white;
 
-    &:hover:not(:disabled) {
-      background-color: #2563eb;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
-    }
-  }
-
-  @media (max-width: 768px) {
-    padding: 1rem 0;
-
-    .content {
-      padding: 1.5rem;
-      margin: 0 1rem;
-    }
-
-    .form {
-      gap: 1rem;
-    }
-
-    .formActions {
-      gap: 0.5rem;
-    }
-
-    .resetButton,
-    .submitButton {
-      padding: 0.75rem 1rem;
+    &:hover {
+      background: #059669;
     }
   }
 }
