@@ -7,7 +7,6 @@ import { useCreateProduct } from "@/api/user";
 import toast from "react-hot-toast";
 import { useGetBrands, useGetCategories } from "@/api/product";
 import { Upload, ArrowLeft, ArrowRight, Check, X, Package } from "lucide-react";
-import Image from "next/image";
 
 interface FormFields {
   parentCategoryId: number;
@@ -225,7 +224,7 @@ const CreateProduct: FC = () => {
                         {i === 0 && (
                           <span className={scss.mainBadge}>Главное</span>
                         )}
-                        <Image src={src} alt="image" />
+                        <img src={src} alt="image" />
                         <button
                           type="button"
                           onClick={() => removeImage(i)}
