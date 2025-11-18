@@ -24,24 +24,16 @@ const CreateProduct: FC = () => {
   const [step, setStep] = useState(1);
   const totalSteps = 8;
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    trigger,
-    getValues,
-    formState: { errors },
-    reset,
-  } = useForm<FormFields>({
-    defaultValues: {
-      parentCategoryId: 0,
-      categoryId: 0,
-      brandId: 0,
-      price: 0,
-      stockCount: 0,
-    },
-  });
+  const { register, handleSubmit, watch, setValue, trigger, getValues, reset } =
+    useForm<FormFields>({
+      defaultValues: {
+        parentCategoryId: 0,
+        categoryId: 0,
+        brandId: 0,
+        price: 0,
+        stockCount: 0,
+      },
+    });
 
   const { mutateAsync: createProduct, isPending } = useCreateProduct();
   const { data: categoriesData } = useGetCategories();
