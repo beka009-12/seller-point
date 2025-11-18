@@ -34,8 +34,8 @@ const Register: FC = () => {
       toast.success("Регистрация успешна!");
       localStorage.setItem("token", response.token);
       router.push("/saller-page");
-    } catch (error: any) {
-      console.error("Ошибка регистрации:", error);
+    } catch (e) {
+      console.error("Ошибка входа:", e);
       toast.error("Не удалось зарегистрироваться. Попробуйте снова.");
     }
   };
@@ -47,8 +47,8 @@ const Register: FC = () => {
       toast.success("Вход выполнен!");
       localStorage.setItem("token", response.token);
       router.push("/saller-page");
-    } catch (error: any) {
-      console.error("Ошибка входа:", error);
+    } catch (e) {
+      console.error("Ошибка входа:", e);
       toast.error("Не удалось войти. Проверьте email и пароль.");
     }
   };

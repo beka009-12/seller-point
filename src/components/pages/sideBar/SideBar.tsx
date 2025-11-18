@@ -2,7 +2,7 @@
 import { useState, useEffect, type FC } from "react";
 import scss from "./SideBar.module.scss";
 import { SideBarIcons } from "@/utils/sideBarIcons/Icons";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 interface SideBarProps {
   onToggle?: (collapsed: boolean) => void;
@@ -31,7 +31,7 @@ const SideBar: FC<SideBarProps> = ({ onToggle }) => {
     if (onToggle) {
       onToggle(isCollapsed);
     }
-  }, []);
+  }, [isCollapsed, onToggle]);
 
   return (
     <aside className={`${scss.SideBar} ${isCollapsed ? scss.collapsed : ""}`}>

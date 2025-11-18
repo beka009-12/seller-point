@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form";
 import Image from "next/image";
 
 interface ProductUpdate {
+  id: number;
   categoryId: number;
   brandId: number;
   title: string;
@@ -33,7 +34,9 @@ const Product: FC = () => {
   const { data: brandsData } = useGetBrands();
   const { mutateAsync: updateProduct } = useUpdateProduct();
 
-  const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [editingProduct, setEditingProduct] = useState<ProductUpdate | null>(
+    null
+  );
 
   const { register, handleSubmit, reset, setValue, watch } =
     useForm<ProductUpdate>();
