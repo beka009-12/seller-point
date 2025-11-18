@@ -225,18 +225,7 @@ const CreateProduct: FC = () => {
                 <h2>Загрузите фото товара</h2>
                 <p>Первое фото будет главным на карточке</p>
 
-                <label className={scss.uploadArea}>
-                  <Upload className={scss.uploadIcon} />
-                  <span>Перетащите фото сюда или нажмите</span>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleFilesChange}
-                  />
-                </label>
-
-                {previewImages.length > 0 && (
+                {previewImages.length > 0 ? (
                   <div className={scss.gallery}>
                     {previewImages.map((src, i) => (
                       <div key={i} className={scss.imageCard}>
@@ -254,6 +243,17 @@ const CreateProduct: FC = () => {
                       </div>
                     ))}
                   </div>
+                ) : (
+                  <label className={scss.uploadArea}>
+                    <Upload className={scss.uploadIcon} />
+                    <span>Перетащите фото сюда или нажмите</span>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleFilesChange}
+                    />
+                  </label>
                 )}
               </div>
             )}
