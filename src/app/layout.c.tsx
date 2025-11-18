@@ -10,7 +10,7 @@ interface ILay {
 const LayoutClient: FC<ILay> = ({ children }) => {
   return (
     <Provider>
-      <Suspense>{children}</Suspense>
+      {children}
       <Toaster position="top-center" reverseOrder={false} />
     </Provider>
   );
