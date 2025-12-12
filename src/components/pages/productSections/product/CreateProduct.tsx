@@ -1,15 +1,23 @@
 "use client";
 
-import { FC, useState, useEffect, useMemo } from "react";
+import { FC, useState, useEffect, useMemo, Fragment } from "react";
 import scss from "./CreateProduct.module.scss";
 import { useForm } from "react-hook-form";
 import { useCreateProduct } from "@/api/user";
 import toast from "react-hot-toast";
 import { useGetBrands, useGetCategories } from "@/api/product";
-import { Upload, ArrowLeft, ArrowRight, Check, X, Package } from "lucide-react";
+import {
+  Upload,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  X,
+  Package,
+  Palette,
+  Ruler,
+} from "lucide-react";
 
 interface FormFields {
-  parentCategoryId: number;
   categoryId: number;
   brandId: number;
   title: string;
@@ -20,74 +28,96 @@ interface FormFields {
   tags: string;
 }
 
+// Иконки для категорий (можно расширять)
+
 const CreateProduct: FC = () => {
   const [step, setStep] = useState(1);
   const totalSteps = 8;
 
-  const { register, handleSubmit, watch, setValue, trigger, getValues, reset } =
-    useForm<FormFields>({
-      defaultValues: {
-        parentCategoryId: 0,
-        categoryId: 0,
-        brandId: 0,
-        price: 0,
-        stockCount: 0,
-      },
-    });
+  const { register, handleSubmit, setValue, trigger, getValues, reset, watch } =
+    useForm<FormFields>();
 
   const { mutateAsync: createProduct, isPending } = useCreateProduct();
   const { data: categoriesData } = useGetCategories();
-  const { data: brandsData } = useGetBrands();
+  const { data: brandByCategoryData } = useGetBrands();
 
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
 
-  const parentCategoryId = watch("parentCategoryId");
-  const categoryId = watch("categoryId");
+  // Хлебные крошки для категорий
+  const [categoryPath, setCategoryPath] = useState<number[]>([]);
 
-  const parentCategories = useMemo(
-    () => categoriesData?.categories.filter((c) => !c.parentId) || [],
-    [categoriesData]
-  );
-  const subCategories = useMemo(
-    () =>
-      categoriesData?.categories.filter(
-        (c) => c.parentId === parentCategoryId
-      ) || [],
-    [categoriesData, parentCategoryId]
-  );
+  const selectedCategoryId = categoryPath[categoryPath.length - 1] || 0;
 
+  // Получаем текущие подкатегории
+  const currentSubcategories = useMemo(() => {
+    if (!categoriesData?.categories) return [];
+    if (categoryPath.length === 0) {
+      return categoriesData.categories.filter((c) => !c.parentId);
+    }
+    const parentId = categoryPath[categoryPath.length - 1];
+    return categoriesData.categories.filter((c) => c.parentId === parentId);
+  }, [categoriesData, categoryPath]);
+
+  // Есть ли подкатегории дальше?
+  const hasSubcategories = currentSubcategories.length > 0;
+
+  // Определяем, обувь ли это (по названию финальной категории)
+  const finalCategory = categoriesData?.categories.find(
+    (c) => c.id === selectedCategoryId
+  );
   const isShoeCategory = useMemo(() => {
-    const cat = subCategories.find((c) => c.id === categoryId);
-    return cat?.name.toLowerCase().includes("обувь");
-  }, [subCategories, categoryId]);
+    const checkIfShoe = (catId: number): boolean => {
+      const cat = categoriesData?.categories.find((c) => c.id === catId);
+      if (!cat) return false;
 
-  const availableSizes = isShoeCategory
+      if (cat.name.toLowerCase().includes("обувь")) return true;
+
+      if (cat.parentId) return checkIfShoe(cat.parentId);
+
+      return false;
+    };
+
+    return selectedCategoryId > 0 ? checkIfShoe(selectedCategoryId) : false;
+  }, [categoriesData, selectedCategoryId]);
+
+  let availableSizes = isShoeCategory
     ? Array.from({ length: 16 }, (_, i) => (34 + i).toString())
     : ["XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL"];
-
   const colors = [
     { name: "Белый", hex: "#FFFFFF" },
     { name: "Чёрный", hex: "#000000" },
     { name: "Серый", hex: "#6B7280" },
     { name: "Красный", hex: "#EF4444" },
-    { name: "Оранжевый", hex: "#fb4517" },
     { name: "Синий", hex: "#3B82F6" },
     { name: "Зелёный", hex: "#10B981" },
     { name: "Жёлтый", hex: "#F59E0B" },
     { name: "Розовый", hex: "#EC4899" },
+    { name: "Оранжевый", hex: "#FB923C" },
   ];
 
-  useEffect(() => setValue("categoryId", 0), [parentCategoryId, setValue]);
+  const selectedBrandId = watch("brandId");
+  useEffect(() => {
+    if (selectedCategoryId > 0) {
+      setValue("categoryId", selectedCategoryId);
+    }
+  }, [selectedCategoryId, setValue]);
 
   const handleFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files?.length) return;
 
+    if (previewImages.length + files.length > 6) {
+      toast("Можно загрузить максимум 6 фото", {
+        icon: "⚠️",
+      });
+      return;
+    }
+
     const valid = Array.from(files).filter((f) => f.size <= 5 * 1024 * 1024);
-    if (valid.length < files.length) toast.error("Некоторые файлы > 5МБ");
+    if (valid.length < files.length) toast.error("Некоторые файлы больше 5МБ");
 
     setSelectedFiles((p) => [...p, ...valid]);
     setPreviewImages((p) => [
@@ -110,26 +140,24 @@ const CreateProduct: FC = () => {
         );
       case 2:
         return (
-          parentCategoryId > 0 || (toast.error("Выберите категорию"), false)
+          selectedCategoryId > 0 || (toast.error("Выберите категорию"), false)
         );
       case 3:
-        return categoryId > 0 || (toast.error("Выберите подкатегорию"), false);
-      case 4:
         return (
           getValues("brandId") > 0 || (toast.error("Выберите бренд"), false)
         );
-      case 5:
+      case 4:
         return await trigger(["title", "description"]);
-      case 6:
+      case 5:
         return (
           (selectedSizes.length > 0 && selectedColors.length > 0) ||
           (toast.error("Выберите размеры и цвета"), false)
         );
-      case 7:
+      case 6:
         const ok = await trigger(["price", "stockCount"]);
         if (!ok) return false;
-        if (getValues("newPrice")) {
-          toast.error("Цена со скидкой должна быть ниже");
+        if (getValues("newPrice")! >= getValues("price")) {
+          toast.error("Цена со скидкой должна быть ниже обычной");
           return false;
         }
         return true;
@@ -139,9 +167,30 @@ const CreateProduct: FC = () => {
   };
 
   const next = async () => {
-    if (await validateStep()) setStep((s) => Math.min(s + 1, totalSteps));
+    if (await validateStep()) {
+      if (step === 2 && !hasSubcategories && selectedCategoryId > 0) {
+        setStep((s) => Math.min(s + 1, totalSteps));
+      } else {
+        setStep((s) => Math.min(s + 1, totalSteps));
+      }
+    }
   };
-  const back = () => setStep((s) => Math.max(s - 1, 1));
+
+  const back = () => {
+    if (step === 2 && categoryPath.length > 0) {
+      setCategoryPath((prev) => prev.slice(0, -1));
+    } else if (step === 2 && categoryPath.length === 0) {
+      setStep((s) => Math.max(s - 1, 1));
+    } else {
+      setStep((s) => Math.max(s - 1, 1));
+    }
+  };
+
+  useEffect(() => {
+    if (selectedCategoryId > 0) {
+      setValue("categoryId", selectedCategoryId);
+    }
+  }, []);
 
   const onSubmit = async (data: FormFields) => {
     if (!(await validateStep())) return;
@@ -152,11 +201,16 @@ const CreateProduct: FC = () => {
     formData.append("title", data.title.trim());
     formData.append("description", data.description.trim());
     formData.append("price", String(data.price));
-    if (data.newPrice) formData.append("newPrice", String(data.newPrice));
+    if (data.newPrice !== undefined)
+      formData.append("newPrice", String(data.newPrice));
     formData.append("stockCount", String(data.stockCount));
+
+    // sizes и colors как массив строк
     formData.append("sizes", JSON.stringify(selectedSizes));
     formData.append("colors", JSON.stringify(selectedColors));
-    if (data.tags)
+
+    // tags как массив строк
+    if (data.tags) {
       formData.append(
         "tags",
         JSON.stringify(
@@ -166,14 +220,16 @@ const CreateProduct: FC = () => {
             .filter(Boolean)
         )
       );
+    }
+
     selectedFiles.forEach((f) => formData.append("files", f));
 
     try {
       await createProduct(formData);
-      toast.success("Товар создан!");
+      toast.success("Товар успешно создан!");
       resetForm();
-    } catch (error) {
-      toast.error(`${error}`);
+    } catch (error: any) {
+      toast.error(error.message || "Ошибка при создании товара");
     }
   };
 
@@ -184,15 +240,24 @@ const CreateProduct: FC = () => {
     setSelectedFiles([]);
     setSelectedSizes([]);
     setSelectedColors([]);
+    setCategoryPath([]);
     setStep(1);
   };
 
   const progress = (step / totalSteps) * 100;
 
+  // Хлебные крошки
+  const breadcrumbs = categoryPath
+    .map((id, idx) => {
+      const cat = categoriesData?.categories.find((c) => c.id === id);
+      const pathSoFar = categoryPath.slice(0, idx + 1);
+      return cat ? { ...cat, pathSoFar } : null;
+    })
+    .filter(Boolean);
+
   return (
     <section className={scss.createProduct}>
       <div className={scss.container}>
-        {/* Header */}
         <div className={scss.header}>
           <h1>Создать товар</h1>
           <div className={scss.progressWrapper}>
@@ -215,7 +280,9 @@ const CreateProduct: FC = () => {
               <div className={scss.uploadStep}>
                 <Package className={scss.icon} />
                 <h2>Загрузите фото товара</h2>
-                <p>Первое фото будет главным на карточке</p>
+                <p className={scss.subtitle}>
+                  Можно добавить до 6 фото. Первое — главное
+                </p>
 
                 {previewImages.length > 0 ? (
                   <div className={scss.gallery}>
@@ -224,21 +291,33 @@ const CreateProduct: FC = () => {
                         {i === 0 && (
                           <span className={scss.mainBadge}>Главное</span>
                         )}
-                        <img src={src} alt="image" />
+                        <img src={src} alt={`Превью ${i + 1}`} />
                         <button
                           type="button"
                           onClick={() => removeImage(i)}
                           className={scss.removeBtn}
                         >
-                          <X />
+                          <X size={20} />
                         </button>
                       </div>
                     ))}
+                    {previewImages.length < 6 && (
+                      <label className={scss.uploadAreaSmall}>
+                        <Upload size={28} />
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={handleFilesChange}
+                        />
+                      </label>
+                    )}
                   </div>
                 ) : (
                   <label className={scss.uploadArea}>
                     <Upload className={scss.uploadIcon} />
-                    <span>Перетащите фото сюда или нажмите</span>
+                    <span>Нажмите для выбора фотографий товара</span>
+                    <span className={scss.uploadHint}>До 6 фото, максимум</span>
                     <input
                       type="file"
                       multiple
@@ -250,37 +329,105 @@ const CreateProduct: FC = () => {
               </div>
             )}
 
-            {/* Остальные шаги */}
+            {/* ШАГ 2 — Категории (многоуровневые) */}
             {step === 2 && (
               <div className={scss.categoryStep}>
-                <h2>Выберите родительскую категорию</h2>
-                <div className={scss.categoryGrid}>
-                  {parentCategories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      className={parentCategoryId === cat.id ? scss.active : ""}
-                      onClick={() => setValue("parentCategoryId", cat.id)}
-                    >
-                      {cat.name}
-                    </button>
+                <div className={scss.breadcrumbs}>
+                  <span
+                    onClick={() => setCategoryPath([])}
+                    className={scss.breadcrumbHome}
+                  >
+                    Все категории
+                  </span>
+                  {breadcrumbs.map((crumb: any) => (
+                    <Fragment key={crumb.id}>
+                      <span>/</span>
+                      <span
+                        onClick={() => setCategoryPath(crumb.pathSoFar)}
+                        className={scss.breadcrumb}
+                      >
+                        {crumb.name}
+                      </span>
+                    </Fragment>
                   ))}
                 </div>
+
+                <h2>
+                  {categoryPath.length === 0
+                    ? "Выберите категорию"
+                    : "Выберите подкатегорию"}
+                </h2>
+
+                <div className={scss.categoryGrid}>
+                  {currentSubcategories.map((cat) => {
+                    const subcats =
+                      categoriesData?.categories.filter(
+                        (c) => c.parentId === cat.id
+                      ) || [];
+                    const hasChildren = subcats.length > 0;
+
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => {
+                          if (hasChildren) {
+                            setCategoryPath((prev) => [...prev, cat.id]);
+                          } else {
+                            setCategoryPath((prev) => [
+                              ...prev.slice(0, -1),
+                              cat.id,
+                            ]);
+                            next();
+                          }
+                        }}
+                        className={scss.categoryCard}
+                      >
+                        <span className={scss.categoryName}>{cat.name}</span>
+                        {hasChildren && (
+                          <ArrowRight size={20} className={scss.arrowRight} />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {categoryPath.length > 0 &&
+                  !hasSubcategories &&
+                  finalCategory && (
+                    <div className={scss.selectedCategory}>
+                      <Check size={24} />
+                      <span>
+                        Выбрано: <strong>{finalCategory.name}</strong>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={next}
+                        className={scss.continueBtn}
+                      >
+                        Продолжить
+                      </button>
+                    </div>
+                  )}
               </div>
             )}
 
-            {step === 3 && parentCategoryId && (
-              <div className={scss.categoryStep}>
-                <h2>Выберите подкатегорию</h2>
-                <div className={scss.categoryGrid}>
-                  {subCategories.map((cat) => (
+            {/* ШАГ 3 — Бренд */}
+            {step === 3 && (
+              <div className={scss.brandStep}>
+                <h2>Выберите бренд</h2>
+
+                <div className={scss.brandScroll}>
+                  {brandByCategoryData?.map((brand) => (
                     <button
-                      key={cat.id}
+                      key={brand.id}
                       type="button"
-                      className={categoryId === cat.id ? scss.active : ""}
-                      onClick={() => setValue("categoryId", cat.id)}
+                      className={`${scss.brandCard} ${
+                        selectedBrandId === brand.id ? scss.active : ""
+                      }`}
+                      onClick={() => setValue("brandId", brand.id)}
                     >
-                      {cat.name}
+                      <img src={brand.logoUrl} alt={brand.name} />
                     </button>
                   ))}
                 </div>
@@ -288,45 +435,34 @@ const CreateProduct: FC = () => {
             )}
 
             {step === 4 && (
-              <div className={scss.selectStep}>
-                <h2>Бренд</h2>
-                <select
-                  {...register("brandId", { valueAsNumber: true })}
-                  className={scss.select}
-                >
-                  <option value={0}>— Выберите бренд —</option>
-                  {brandsData?.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.name}
-                    </option>
-                  ))}
-                </select>
+              <div className={scss.textStep}>
+                <h2>Название и описание</h2>
+                <label className={scss.label}>Введите название товара *</label>
+                <input
+                  type="text"
+                  {...register("title", { required: true })}
+                  placeholder="Название товара"
+                />
+                <label className={scss.label}>
+                  Напишите подробное описание товара *
+                </label>
+                <textarea
+                  rows={6}
+                  {...register("description", {
+                    required: true,
+                  })}
+                  placeholder="Описание товара"
+                />
               </div>
             )}
 
             {step === 5 && (
-              <div className={scss.textStep}>
-                <h2>Название и описание</h2>
-                <input
-                  {...register("title", { required: true, minLength: 3 })}
-                  placeholder="Кроссовки Nike Air Max..."
-                />
-                <textarea
-                  {...register("description", {
-                    required: true,
-                    minLength: 20,
-                  })}
-                  rows={6}
-                  placeholder="Подробное описание..."
-                />
-              </div>
-            )}
-
-            {step === 6 && (
               <div className={scss.sizesColorsStep}>
                 <h2>Размеры и цвета</h2>
                 <div className={scss.section}>
-                  <h3>Размеры</h3>
+                  <h3>
+                    <Ruler size={20} /> Размеры {isShoeCategory && "(EU)"}
+                  </h3>
                   <div className={scss.chips}>
                     {availableSizes.map((s) => (
                       <button
@@ -345,7 +481,9 @@ const CreateProduct: FC = () => {
                   </div>
                 </div>
                 <div className={scss.section}>
-                  <h3>Цвета</h3>
+                  <h3>
+                    <Palette size={20} /> Цвета
+                  </h3>
                   <div className={scss.colorChips}>
                     {colors.map((c) => (
                       <button
@@ -362,8 +500,7 @@ const CreateProduct: FC = () => {
                           )
                         }
                       >
-                        <span style={{ backgroundColor: c.hex }} />
-                        {c.name}
+                        <span style={{ background: `${c.hex}` }}></span>
                       </button>
                     ))}
                   </div>
@@ -371,44 +508,54 @@ const CreateProduct: FC = () => {
               </div>
             )}
 
-            {step === 7 && (
+            {step === 6 && (
               <div className={scss.priceStep}>
-                <h2>Цена и количество</h2>
-                <input
-                  type="number"
-                  {...register("price", {
-                    valueAsNumber: true,
-                    required: true,
-                  })}
-                  placeholder="Цена (сом)"
-                />
-                <input
-                  type="number"
-                  {...register("newPrice", { valueAsNumber: true })}
-                  placeholder="Цена со скидкой (необязательно)"
-                />
-                <input
-                  type="number"
-                  {...register("stockCount", { valueAsNumber: true })}
-                  placeholder="Количество на складе"
-                />
+                <h2>Цена и наличие</h2>
+                <div className={scss.inputGroup}>
+                  <label className={scss.label}>Цена *</label>
+                  <input
+                    type="number"
+                    {...register("price", {
+                      required: true,
+                      valueAsNumber: true,
+                    })}
+                    placeholder="Обычная цена (сом)"
+                  />
+                  <label className={scss.label}>
+                    Цена со скидкой{" "}
+                    <span className={scss.warning}>(необязательно)</span>
+                  </label>
+                  <input
+                    type="number"
+                    {...register("newPrice", { valueAsNumber: true })}
+                    placeholder="Цена со скидкой "
+                  />
+                  <label className={scss.label}>Количество на складе *</label>
+                  <input
+                    type="number"
+                    {...register("stockCount", {
+                      required: true,
+                      valueAsNumber: true,
+                    })}
+                    placeholder="Количество на складе"
+                  />
+                </div>
               </div>
             )}
 
-            {step === 8 && (
+            {step === 7 && (
               <div className={scss.finalStep}>
                 <Check className={scss.successIcon} />
-                <h2>Готово к публикации!</h2>
-                <p>Проверьте данные и нажмите «Создать товар»</p>
+                <h2>Всё готово!</h2>
+                <p>Проверьте данные и опубликуйте товар</p>
               </div>
             )}
           </div>
 
-          {/* Навигация */}
           <div className={scss.actions}>
             {step > 1 && (
               <button type="button" onClick={back} className={scss.backBtn}>
-                <ArrowLeft /> Назад
+                <ArrowLeft className={scss.arrowL} /> Назад
               </button>
             )}
             <div className={scss.rightActions}>
@@ -418,11 +565,14 @@ const CreateProduct: FC = () => {
                   disabled={isPending}
                   className={scss.submitBtn}
                 >
-                  {!isPending ? "Создаём..." : "Создать товар"}
+                  {isPending ? "Создаём..." : "Опубликовать товар"}
                 </button>
               ) : (
                 <button type="button" onClick={next} className={scss.nextBtn}>
-                  Далее <ArrowRight className={scss.arrows} />
+                  {step === totalSteps - 1
+                    ? "Проверить и опубликовать"
+                    : "Далее"}{" "}
+                  <ArrowRight className={scss.arrowR} />
                 </button>
               )}
             </div>

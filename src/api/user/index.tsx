@@ -37,6 +37,28 @@ const useGetMe = () => {
   });
 };
 
+const useCreateStore = () => {
+  return useMutation<STORE.CreateStoreRes, Error, STORE.CreateStoreReq>({
+    mutationFn: async (data) => {
+      const response = await api.post<STORE.CreateStoreRes>(
+        "/saller/create-store",
+        data
+      );
+      return response.data;
+    },
+  });
+};
+
+const useGetMyStore = () => {
+  return useQuery<STORE.GetMyStoreRes>({
+    queryKey: ["my-store"],
+    queryFn: async () => {
+      const response = await api.get("/saller/my-store");
+      return response.data;
+    },
+  });
+};
+
 // ==================== PRODUCT HOOKS ====================
 
 const useCreateProduct = () => {
@@ -54,4 +76,11 @@ const useCreateProduct = () => {
   });
 };
 
-export { useSignUp, useSignIn, useGetMe, useCreateProduct };
+export {
+  useSignUp,
+  useSignIn,
+  useGetMe,
+  useCreateProduct,
+  useCreateStore,
+  useGetMyStore,
+};

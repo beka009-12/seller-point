@@ -1,129 +1,271 @@
 .Product {
-  padding-block: 200px;
-  .content {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    justify-content: center;
+  height: 90dvh;
+  background-color: #f8fafc;
+}
+
+.header {
+  text-align: center;
+}
+
+.title {
+  font-size: 30px;
+  font-weight: 600;
+  color: #0f172a;
+  letter-spacing: -0.6px;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: #64748b;
+  font-weight: 400;
+}
+
+/* Сетка карточек товаров */
+.content {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  padding: 18px 0;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    border-color: #cbd5e1;
+  }
+}
+
+.imageWrapper {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  background: #f1f5f9;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+}
+
+.info {
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.productTitle {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.oldPrice {
+  font-size: 14px;
+  color: #94a3b8;
+  text-decoration: line-through;
+  margin-left: 8px;
+}
+
+.inStock {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.outOfStock {
+  font-size: 13px;
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.editBtn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 10px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #fd5b33;
+    color: white;
+  }
+}
+
+/* === МОДАЛЬНОЕ ОКНО === */
+.modalOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal {
+  background: white;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modalHeader {
+  padding: 24px 32px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modalTitle {
+  font-size: 22px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+}
+
+.modalBody {
+  padding: 24px 32px;
+  display: grid;
+  gap: 20px;
+  max-height: 65vh;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+}
+
+.input,
+.select,
+.textarea {
+  padding: 12px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 15px;
+  background: #ffffff;
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #0f172a;
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+  }
+}
+
+.textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.modalFooter {
+  padding: 20px 32px 32px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  border-top: 1px solid #e2e8f0;
+}
+
+.btn {
+  padding: 11px 20px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.btnSecondary {
+  background: #f1f5f9;
+  color: #475569;
+
+  &:hover {
+    background: #e2e8f0;
+  }
+}
+
+.btnPrimary {
+  background: #fd5b33;
+  color: white;
+
+  &:hover {
+    background: #ed5732;
   }
 
-  .card {
-    width: 200px;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    overflow: hidden;
-    padding: 10px;
-    background-color: #fff;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    &:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    .imageWrapper {
-      width: 100%;
-      height: 120px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-      margin-bottom: 8px;
-
-      img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: cover;
-      }
-    }
-
-    h3 {
-      font-size: 16px;
-      margin: 4px 0;
-      text-align: center;
-    }
-
-    p {
-      font-size: 14px;
-      margin: 4px 0;
-    }
-
-    .stockToggle {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 12px;
-      margin-bottom: 8px;
-      color: #333;
-    }
-
-    button {
-      background-color: #4caf50;
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: background-color 0.2s;
-
-      &:hover {
-        background-color: #45a049;
-      }
-    }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
+}
 
-  /* Модалка */
-  .modalOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 999;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
   }
+  to {
+    opacity: 1;
+  }
+}
 
-  .modal {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 10px;
-    width: 400px;
-    max-width: 90%;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-
-    h2 {
-      margin: 0 0 10px 0;
-      font-size: 18px;
-      text-align: center;
-    }
-
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-
-      input,
-      textarea {
-        padding: 6px 10px;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-        font-size: 14px;
-      }
-
-      button {
-        width: 100%;
-      }
-    }
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

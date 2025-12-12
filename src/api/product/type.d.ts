@@ -32,13 +32,7 @@ interface ProductUpdate {
   archivedAt?: string | null;
 }
 namespace GETPRODUCT {
-  type useGetBrandsRes = {
-    id: number;
-    name: string;
-    logoUrl?: string;
-    createdAt: string;
-    updatedAt: string;
-  }[];
+  type useGetBrandsRes = Brand[];
   type useGetBrandsReq = void;
   type useGetproductRes = {
     id: number;
@@ -80,4 +74,7 @@ namespace GETPRODUCT {
     archivedAt?: string | null;
   }[];
   type useUpdateProductReq = { id: number; data: Partial<ProductUpdate> };
+
+  type useGetBrandByCategoryRes = Brand[];
+  type useGetBrandByCategoryReq = number;
 }

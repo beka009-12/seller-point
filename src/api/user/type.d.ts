@@ -115,3 +115,35 @@ namespace PRODUCT {
     createdAt: string;
   };
 }
+
+namespace STORE {
+  type CreateStoreReq = {
+    name: string;
+    description: string;
+    address: string;
+    region: string;
+    logo: string;
+  };
+
+  type CreateStoreRes = {
+    id: number;
+    name: string;
+    description: string;
+    address: string;
+    region: string;
+    logo: string;
+    createdAt: string;
+    ownerId: number;
+  };
+  type GetMyStoreRes = {
+    id: number;
+    name: string;
+    description: string;
+    address: string;
+    region: string;
+    logo: string;
+    createdAt: string;
+    ownerId: number;
+    products: Product[];
+  };
+}

@@ -1,7 +1,7 @@
 "use client";
 import { type FC, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
-import { useSignUp, useSignIn } from "@/api/user";
+import { useSignUp, useSignIn, useCreateStore } from "@/api/user";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import scss from "./Register.module.scss";
@@ -13,6 +13,7 @@ const Register: FC = () => {
 
   const { mutateAsync: signUpMutate } = useSignUp();
   const { mutateAsync: signInMutate } = useSignIn();
+  const { mutateAsync: createStore } = useCreateStore();
   const router = useRouter();
 
   const {
@@ -30,12 +31,13 @@ const Register: FC = () => {
   const onRegister: SubmitHandler<AUTH.SignUpReq> = async (formData) => {
     try {
       const response = await signUpMutate(formData);
+
       resetSignUp();
       toast.success("Регистрация успешна!");
+
       localStorage.setItem("token", response.token);
-      router.push("/saller-page");
     } catch (e) {
-      console.error("Ошибка входа:", e);
+      console.error("Ошибка регистрации:", e);
       toast.error("Не удалось зарегистрироваться. Попробуйте снова.");
     }
   };
@@ -43,10 +45,11 @@ const Register: FC = () => {
   const onLogin: SubmitHandler<AUTH.SignInReq> = async (formData) => {
     try {
       const response = await signInMutate(formData);
+
       resetSignIn();
       toast.success("Вход выполнен!");
+
       localStorage.setItem("token", response.token);
-      router.push("/saller-page");
     } catch (e) {
       console.error("Ошибка входа:", e);
       toast.error("Не удалось войти. Проверьте email и пароль.");

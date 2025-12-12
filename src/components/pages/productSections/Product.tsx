@@ -1,38 +1,26 @@
 "use client";
+
 import { FC, useState } from "react";
 import scss from "./Product.module.scss";
-import {
-  useGetProduct,
-  useUpdateProduct,
-  useGetCategories,
-  useGetBrands,
-} from "@/api/product";
+import { useGetProduct, useUpdateProduct } from "@/api/product";
 import { useForm } from "react-hook-form";
-import Image from "next/image";
 
 interface ProductUpdate {
   id: number;
-  categoryId: number;
-  brandId: number;
   title: string;
   description: string;
-  images: string[];
-  sizes: string[];
-  colors: string[];
   price: number;
   newPrice?: number | null;
-  stockCount: number;
-  inStock?: boolean;
   tags: string[];
-  isArchived?: boolean;
-  archivedAt?: string | null;
+  categoryId: number;
+  brandId: number;
+  stockCount: number;
+  images: string[];
 }
 
 const Product: FC = () => {
   const { data: products, refetch } = useGetProduct();
-  const { data: categoriesData } = useGetCategories();
-  const { data: brandsData } = useGetBrands();
-  const { mutateAsync: updateProduct } = useUpdateProduct();
+  const { mutateAsync: updateProduct, isPending } = useUpdateProduct();
 
   const [editingProduct, setEditingProduct] = useState<ProductUpdate | null>(
     null
@@ -40,150 +28,214 @@ const Product: FC = () => {
 
   const { register, handleSubmit, reset, setValue, watch } =
     useForm<ProductUpdate>();
-  const watchTags = watch("tags") || [];
 
-  const openEditModal = (product: ProductUpdate) => {
+  const watchTags = watch("tags", []);
+
+  const openEditModal = (product: any) => {
     setEditingProduct(product);
     reset({
       id: product.id,
-      categoryId: product.categoryId,
-      brandId: product.brandId,
       title: product.title,
       description: product.description,
-      images: product.images || [],
-      sizes: product.sizes || [],
-      colors: product.colors || [],
-      price: product.price,
-      newPrice: product.newPrice ?? null,
-      stockCount: product.stockCount,
-      inStock: product.inStock,
+      newPrice: product.newPrice ?? undefined,
       tags: product.tags || [],
-      isArchived: product.isArchived ?? false,
-      archivedAt: product.archivedAt ?? null,
+      categoryId: product.categoryId,
+      brandId: product.brandId,
+      stockCount: product.stockCount,
+      images: product.images || [],
     });
   };
 
-  const closeModal = () => setEditingProduct(null);
+  const closeModal = () => {
+    setEditingProduct(null);
+    reset();
+  };
 
   const onSubmit = async (data: ProductUpdate) => {
     if (!editingProduct) return;
 
+    // Отправляем только то, что можно менять
     await updateProduct({
       id: editingProduct.id,
-      data,
+      data: {
+        title: data.title.trim(),
+        description: data.description.trim(),
+        newPrice: data.newPrice || null,
+        tags: data.tags,
+        stockCount: data.stockCount || 0,
+      },
     });
 
-    closeModal();
     refetch();
+    closeModal();
   };
 
-  const parentCategories =
-    categoriesData?.categories.filter((c) => !c.parentId) || [];
-  const childCategories =
-    categoriesData?.categories.filter((c) => c.parentId) || [];
-
   return (
-    <section className={scss.Product}>
-      <div className="container">
-        <div className={scss.content}>
-          {products?.map((item) => (
-            <div key={item.id} className={scss.card}>
-              <div className={scss.imageWrapper}>
-                {item.images?.[0] && (
-                  <Image
-                    src={item.images[0]}
-                    alt={item.title}
-                    width={200}
-                    height={200}
-                    className={scss.productImage}
-                  />
-                )}
+    <>
+      <section className={scss.Product}>
+        <div className={scss.container}>
+          <header className={scss.header}>
+            <h1 className={scss.title}>Мои товары</h1>
+            <p className={scss.subtitle}>
+              Редактируйте название, описание, цену и теги
+            </p>
+          </header>
+
+          <div className={scss.content}>
+            {products?.map((item) => (
+              <div key={item.id} className={scss.card}>
+                <div className={scss.imageWrapper}>
+                  {item.images?.[0] ? (
+                    <img src={item.images[0]} alt={item.title} />
+                  ) : (
+                    <div className={scss.placeholder}>Нет фото</div>
+                  )}
+                </div>
+
+                <div className={scss.info}>
+                  <h3 className={scss.productTitle}>{item.title}</h3>
+
+                  <div className={scss.price}>
+                    {item.newPrice !== null ? (
+                      item.newPrice! < item.price ? (
+                        <>
+                          <span className={scss.currentPrice}>
+                            {item.newPrice} сом
+                          </span>
+                          <span className={scss.oldPrice}>
+                            {item.price} сом
+                          </span>
+                        </>
+                      ) : (
+                        <span className={scss.currentPrice}>
+                          {item.newPrice} сом
+                        </span>
+                      )
+                    ) : (
+                      <span className={scss.currentPrice}>
+                        {item.price} сом
+                      </span>
+                    )}
+                  </div>
+
+                  {item.stockCount > 0 ? (
+                    <span className={scss.inStock}>
+                      В наличии {item.stockCount} шт
+                    </span>
+                  ) : (
+                    <span className={scss.outOfStock}>Нет в наличии</span>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => openEditModal(item)}
+                    className={scss.editBtn}
+                  >
+                    Редактировать
+                  </button>
+                </div>
               </div>
-              <h3>{item.title}</h3>
-              <p>Цена: {item.newPrice ?? item.price} сом</p>
-              <button type="button" onClick={() => openEditModal(item)}>
-                Редактировать
-              </button>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
-        {editingProduct && (
-          <div className={scss.modalOverlay}>
-            <div className={scss.modal}>
-              <h2>Редактировать товар</h2>
-              <form onSubmit={handleSubmit(onSubmit)}>
-                <label>Категория</label>
-                <select {...register("categoryId", { required: true })}>
-                  {parentCategories.map((parent) => (
-                    <option key={parent.id} value={parent.id}>
-                      {parent.name}
-                    </option>
-                  ))}
-                  {childCategories.map((child) => {
-                    const parent = parentCategories.find(
-                      (p) => p.id === child.parentId
-                    );
-                    return (
-                      <option key={child.id} value={child.id}>
-                        {parent ? `${parent.name} → ${child.name}` : child.name}
-                      </option>
-                    );
+        {/* МОДАЛКА — только разрешённые поля */}
+      </section>
+      {editingProduct && (
+        <div className={scss.modalOverlay} onClick={closeModal}>
+          <div className={scss.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={scss.modalHeader}>
+              <h2 className={scss.modalTitle}>Редактировать товар</h2>
+            </div>
+
+            <form onSubmit={handleSubmit(onSubmit)} className={scss.modalBody}>
+              <div className={scss.formGroup}>
+                <label className={scss.label}>Название товара *</label>
+                <input
+                  className={scss.input}
+                  {...register("title", { required: true })}
+                  placeholder="Например: Кроссовки Nike Air Max"
+                />
+              </div>
+
+              <div className={scss.formGroup}>
+                <label className={scss.label}>Описание</label>
+                <textarea
+                  className={scss.textarea}
+                  rows={5}
+                  {...register("description")}
+                  placeholder="Расскажите о товаре: материал, особенности, для кого..."
+                />
+              </div>
+
+              <div className={scss.formGroup}>
+                <label className={scss.label}>
+                  Цена со скидкой (необязательно)
+                </label>
+                <input
+                  type="number"
+                  step="1"
+                  className={scss.input}
+                  placeholder="Оставьте пустым, если нет скидки"
+                  {...register("newPrice", { valueAsNumber: true })}
+                />
+              </div>
+
+              <div className={scss.formGroup}>
+                <label className={scss.label}>Количество на складе *</label>
+                <input
+                  type="number"
+                  step="1"
+                  className={scss.input}
+                  {...register("stockCount", {
+                    required: true,
+                    valueAsNumber: true,
+                    min: 0,
                   })}
-                </select>
-
-                <label>Бренд</label>
-                <select {...register("brandId", { required: true })}>
-                  {brandsData?.map((brand) => (
-                    <option key={brand.id} value={brand.id}>
-                      {brand.name}
-                    </option>
-                  ))}
-                </select>
-
-                <label>Название</label>
-                <input {...register("title", { required: true })} />
-
-                <label>Описание</label>
-                <textarea {...register("description")} />
-
-                <label>Цена</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  {...register("price", { required: true })}
+                  placeholder="Количество доступных единиц товара"
                 />
+              </div>
 
-                <label>Старая цена (необязательно)</label>
-                <input type="number" step="0.01" {...register("newPrice")} />
-
-                <label>Количество на складе</label>
+              <div className={scss.formGroup}>
+                <label className={scss.label}>Теги (через запятую)</label>
                 <input
-                  type="number"
-                  {...register("stockCount", { required: true })}
-                />
-
-                <label>Теги (через запятую)</label>
-                <input
-                  value={watchTags.join(", ")}
+                  className={scss.input}
+                  value={Array.isArray(watchTags) ? watchTags.join(", ") : ""}
                   onChange={(e) =>
                     setValue(
                       "tags",
-                      e.target.value.split(",").map((t) => t.trim())
+                      e.target.value
+                        .split(",")
+                        .map((t) => t.trim())
+                        .filter(Boolean)
                     )
                   }
+                  placeholder="новинка, лето, хит, акция"
                 />
+              </div>
+            </form>
 
-                <button type="submit">Сохранить</button>
-                <button type="button" onClick={closeModal}>
-                  Отмена
-                </button>
-              </form>
+            <div className={scss.modalFooter}>
+              <button
+                type="button"
+                onClick={closeModal}
+                className={`${scss.btn} ${scss.btnSecondary}`}
+              >
+                Отмена
+              </button>
+              <button
+                type="submit"
+                disabled={isPending}
+                onClick={handleSubmit(onSubmit)}
+                className={`${scss.btn} ${scss.btnPrimary}`}
+              >
+                {isPending ? "Сохраняется..." : "Сохранить изменения"}
+              </button>
             </div>
           </div>
-        )}
-      </div>
-    </section>
+        </div>
+      )}
+    </>
   );
 };
 

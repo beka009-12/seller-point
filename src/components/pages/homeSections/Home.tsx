@@ -3,9 +3,12 @@ import { type FC } from "react";
 import scss from "./Home.module.scss";
 import CountUp from "@/utils/anim/CountUp";
 import { useRouter } from "next/navigation";
+import { useGetProduct } from "@/api/product";
 
 const Home: FC = () => {
   const router = useRouter();
+  const { data: product } = useGetProduct();
+
   return (
     <section className={scss.Home}>
       <div className="container">
@@ -16,12 +19,17 @@ const Home: FC = () => {
               <div className={scss.cardHeader}>
                 <div className={scss.iconWrapper}>
                   <svg
-                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
                     fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
                     stroke="currentColor"
-                    strokeWidth="2"
                   >
-                    <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m21 7.5-2.25-1.313M21 7.5v2.25m0-2.25-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3 2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75 2.25-1.313M12 21.75V19.5m0 2.25-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25"
+                    />
                   </svg>
                 </div>
                 <span className={scss.trend}>+12%</span>
@@ -29,7 +37,7 @@ const Home: FC = () => {
               <h3>
                 <CountUp
                   from={0}
-                  to={30}
+                  to={product ? product.length : 0}
                   separator=","
                   direction="up"
                   duration={2}
@@ -137,14 +145,38 @@ const Home: FC = () => {
                   </svg>
                   Добавить товар
                 </button>
+                <button
+                  onClick={() => router.push("/products")}
+                  className={scss.btnSecondary}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m21 7.5-2.25-1.313M21 7.5v2.25m0-2.25-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3 2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75 2.25-1.313M12 21.75V19.5m0 2.25-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25"
+                    />
+                  </svg>
+                  Посмотреть товары
+                </button>
                 <button className={scss.btnSecondary}>
                   <svg
-                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
                     fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
                     stroke="currentColor"
-                    strokeWidth="2"
                   >
-                    <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
+                    />
                   </svg>
                   Посмотреть заказы
                 </button>

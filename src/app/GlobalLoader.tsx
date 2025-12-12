@@ -17,8 +17,10 @@ export default function GlobalLoader() {
   if (!loading) return null;
 
   return (
-    <div className="loading-overlay">
-      <div className="spinner"></div>
-    </div>
+    <>
+      {/* <div className="loading-overlay">
+       <div className="spinner"></div>
+    </div> */}
+    </>
   );
 }

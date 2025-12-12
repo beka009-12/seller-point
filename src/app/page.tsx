@@ -6,12 +6,12 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    let token = localStorage.getItem("token");
 
-    if (!token) {
-      router.replace("/register");
-    } else {
+    if (token) {
       router.replace("/saller-page");
+    } else {
+      router.replace("/register");
     }
   }, [router]);
 }

@@ -6,6 +6,7 @@ interface Category {
   name: string;
   parentId?: number | null;
   parent?: Category | null;
+  categoryLogo?: string | null;
   children?: Category[];
   products?: Product[];
   createdAt: string;
