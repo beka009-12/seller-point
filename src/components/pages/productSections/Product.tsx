@@ -31,7 +31,7 @@ const Product: FC = () => {
 
   const watchTags = watch("tags", []);
 
-  const openEditModal = (product: any) => {
+  const openEditModal = (product: ProductUpdate) => {
     setEditingProduct(product);
     reset({
       id: product.id,
