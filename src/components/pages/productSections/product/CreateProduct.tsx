@@ -228,8 +228,8 @@ const CreateProduct: FC = () => {
       await createProduct(formData);
       toast.success("Товар успешно создан!");
       resetForm();
-    } catch (error: any) {
-      toast.error(error.message || "Ошибка при создании товара");
+    } catch (error) {
+      toast.error("Ошибка при создании товара");
     }
   };
 
@@ -247,7 +247,7 @@ const CreateProduct: FC = () => {
   const progress = (step / totalSteps) * 100;
 
   // Хлебные крошки
-  const breadcrumbs = categoryPath
+  const breadcrumbs: any[] = categoryPath
     .map((id, idx) => {
       const cat = categoriesData?.categories.find((c) => c.id === id);
       const pathSoFar = categoryPath.slice(0, idx + 1);
@@ -339,7 +339,7 @@ const CreateProduct: FC = () => {
                   >
                     Все категории
                   </span>
-                  {breadcrumbs.map((crumb: any) => (
+                  {breadcrumbs.map((crumb) => (
                     <Fragment key={crumb.id}>
                       <span>/</span>
                       <span
