@@ -75,11 +75,10 @@ const Product: FC = () => {
       <section className={scss.Product}>
         <div className={scss.container}>
           <header className={scss.header}>
-            <h2 className={scss.title}>Мои товары</h2>
-            <div className={scss.filters}>
-              {/* Фильтры можно добавить здесь в будущем */}
-              <button>Скидки</button>
-            </div>
+            <h1 className={scss.title}>Мои товары</h1>
+            <p className={scss.subtitle}>
+              Редактируйте название, описание, цену и теги
+            </p>
           </header>
 
           <div className={scss.content}>
@@ -144,7 +143,6 @@ const Product: FC = () => {
           </div>
         </div>
       </section>
-
       {editingProduct && (
         <div className={scss.modalOverlay} onClick={closeModal}>
           <div className={scss.modal} onClick={(e) => e.stopPropagation()}>

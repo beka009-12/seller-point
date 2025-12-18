@@ -83,7 +83,7 @@ const CreateProduct: FC = () => {
     return selectedCategoryId > 0 ? checkIfShoe(selectedCategoryId) : false;
   }, [categoriesData, selectedCategoryId]);
 
-  let availableSizes = isShoeCategory
+  const availableSizes = isShoeCategory
     ? Array.from({ length: 16 }, (_, i) => (34 + i).toString())
     : ["XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL"];
   const colors = [
