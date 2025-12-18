@@ -13,8 +13,6 @@ const Register: FC = () => {
 
   const { mutateAsync: signUpMutate } = useSignUp();
   const { mutateAsync: signInMutate } = useSignIn();
-  const { mutateAsync: createStore } = useCreateStore();
-  const router = useRouter();
 
   const {
     register: registerSignUp,

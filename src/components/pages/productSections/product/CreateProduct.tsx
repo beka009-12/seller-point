@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { useCreateProduct } from "@/api/user";
 import toast from "react-hot-toast";
 import { useGetBrands, useGetCategories } from "@/api/product";
+import Image from "next/image";
 import {
   Upload,
   ArrowLeft,
@@ -28,7 +29,17 @@ interface FormFields {
   tags: string;
 }
 
-// Иконки для категорий (можно расширять)
+interface Category {
+  id: number;
+  name: string;
+  parentId?: number;
+}
+
+interface Brand {
+  id: number;
+  name: string;
+  logoUrl: string;
+}
 
 const CreateProduct: FC = () => {
   const [step, setStep] = useState(1);
@@ -46,12 +57,10 @@ const CreateProduct: FC = () => {
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
 
-  // Хлебные крошки для категорий
   const [categoryPath, setCategoryPath] = useState<number[]>([]);
 
   const selectedCategoryId = categoryPath[categoryPath.length - 1] || 0;
 
-  // Получаем текущие подкатегории
   const currentSubcategories = useMemo(() => {
     if (!categoriesData?.categories) return [];
     if (categoryPath.length === 0) {
@@ -61,31 +70,27 @@ const CreateProduct: FC = () => {
     return categoriesData.categories.filter((c) => c.parentId === parentId);
   }, [categoriesData, categoryPath]);
 
-  // Есть ли подкатегории дальше?
   const hasSubcategories = currentSubcategories.length > 0;
 
-  // Определяем, обувь ли это (по названию финальной категории)
   const finalCategory = categoriesData?.categories.find(
     (c) => c.id === selectedCategoryId
   );
+
   const isShoeCategory = useMemo(() => {
     const checkIfShoe = (catId: number): boolean => {
       const cat = categoriesData?.categories.find((c) => c.id === catId);
       if (!cat) return false;
-
       if (cat.name.toLowerCase().includes("обувь")) return true;
-
       if (cat.parentId) return checkIfShoe(cat.parentId);
-
       return false;
     };
-
     return selectedCategoryId > 0 ? checkIfShoe(selectedCategoryId) : false;
   }, [categoriesData, selectedCategoryId]);
 
   const availableSizes = isShoeCategory
     ? Array.from({ length: 16 }, (_, i) => (34 + i).toString())
     : ["XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL"];
+
   const colors = [
     { name: "Белый", hex: "#FFFFFF" },
     { name: "Чёрный", hex: "#000000" },
@@ -99,6 +104,7 @@ const CreateProduct: FC = () => {
   ];
 
   const selectedBrandId = watch("brandId");
+
   useEffect(() => {
     if (selectedCategoryId > 0) {
       setValue("categoryId", selectedCategoryId);
@@ -110,9 +116,7 @@ const CreateProduct: FC = () => {
     if (!files?.length) return;
 
     if (previewImages.length + files.length > 6) {
-      toast("Можно загрузить максимум 6 фото", {
-        icon: "⚠️",
-      });
+      toast("Можно загрузить максимум 6 фото", { icon: "⚠️" });
       return;
     }
 
@@ -168,29 +172,17 @@ const CreateProduct: FC = () => {
 
   const next = async () => {
     if (await validateStep()) {
-      if (step === 2 && !hasSubcategories && selectedCategoryId > 0) {
-        setStep((s) => Math.min(s + 1, totalSteps));
-      } else {
-        setStep((s) => Math.min(s + 1, totalSteps));
-      }
+      setStep((s) => Math.min(s + 1, totalSteps));
     }
   };
 
   const back = () => {
     if (step === 2 && categoryPath.length > 0) {
       setCategoryPath((prev) => prev.slice(0, -1));
-    } else if (step === 2 && categoryPath.length === 0) {
-      setStep((s) => Math.max(s - 1, 1));
     } else {
       setStep((s) => Math.max(s - 1, 1));
     }
   };
-
-  useEffect(() => {
-    if (selectedCategoryId > 0) {
-      setValue("categoryId", selectedCategoryId);
-    }
-  }, []);
 
   const onSubmit = async (data: FormFields) => {
     if (!(await validateStep())) return;
@@ -205,11 +197,9 @@ const CreateProduct: FC = () => {
       formData.append("newPrice", String(data.newPrice));
     formData.append("stockCount", String(data.stockCount));
 
-    // sizes и colors как массив строк
     formData.append("sizes", JSON.stringify(selectedSizes));
     formData.append("colors", JSON.stringify(selectedColors));
 
-    // tags как массив строк
     if (data.tags) {
       formData.append(
         "tags",
@@ -246,14 +236,13 @@ const CreateProduct: FC = () => {
 
   const progress = (step / totalSteps) * 100;
 
-  // Хлебные крошки
   const breadcrumbs = categoryPath
     .map((id, idx) => {
       const cat = categoriesData?.categories.find((c) => c.id === id);
       const pathSoFar = categoryPath.slice(0, idx + 1);
       return cat ? { ...cat, pathSoFar } : null;
     })
-    .filter(Boolean);
+    .filter((b) => b !== null);
 
   return (
     <section className={scss.createProduct}>
