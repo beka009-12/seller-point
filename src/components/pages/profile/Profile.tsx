@@ -6,7 +6,7 @@ const Profile: FC = () => {
   return (
     <section className={scss.Profile}>
       <div className="container">
-        <div className={scss.content}></div>
+        <div className={scss.content}>hello</div>
       </div>
     </section>
   );

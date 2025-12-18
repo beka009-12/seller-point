@@ -1,8 +1,8 @@
-import Product from "@/components/pages/productSections/Product";
+import ProductPage from "@/components/pages/ProductPage";
 import { type FC } from "react";
 
 const page: FC = () => {
-  return <Product />;
+  return <ProductPage />;
 };
 
 export default page;

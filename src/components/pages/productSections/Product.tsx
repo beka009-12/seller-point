@@ -75,10 +75,11 @@ const Product: FC = () => {
       <section className={scss.Product}>
         <div className={scss.container}>
           <header className={scss.header}>
-            <h1 className={scss.title}>Мои товары</h1>
-            <p className={scss.subtitle}>
-              Редактируйте название, описание, цену и теги
-            </p>
+            <h2 className={scss.title}>Мои товары</h2>
+            <div className={scss.filters}>
+              {/* Фильтры можно добавить здесь в будущем */}
+              <button>Скидки</button>
+            </div>
           </header>
 
           <div className={scss.content}>
@@ -86,9 +87,13 @@ const Product: FC = () => {
               <div key={item.id} className={scss.card}>
                 <div className={scss.imageWrapper}>
                   {item.images?.[0] ? (
-                    <img src={item.images[0]} alt={item.title} />
+                    <img loading="lazy" src={item.images[0]} alt={item.title} />
                   ) : (
-                    <div className={scss.placeholder}>Нет фото</div>
+                    <img
+                      loading="lazy"
+                      src="https://серебро.рф/img/placeholder.png"
+                      alt="фото товара нет"
+                    />
                   )}
                 </div>
 
@@ -138,9 +143,8 @@ const Product: FC = () => {
             ))}
           </div>
         </div>
-
-        {/* МОДАЛКА — только разрешённые поля */}
       </section>
+
       {editingProduct && (
         <div className={scss.modalOverlay} onClick={closeModal}>
           <div className={scss.modal} onClick={(e) => e.stopPropagation()}>

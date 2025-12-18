@@ -1,4 +1,4 @@
-import Profile from "@/components/profile/Profile";
+import Profile from "@/components/pages/profile/Profile";
 import { type FC } from "react";
 
 const page: FC = () => {
