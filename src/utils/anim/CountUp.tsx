@@ -1,6 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
-import { useMotionValue } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 
 interface CountUpProps {
   to: number;
@@ -9,7 +8,6 @@ interface CountUpProps {
   delay?: number;
   duration?: number;
   className?: string;
-  startWhen?: boolean;
   separator?: string;
   onStart?: () => void;
   onEnd?: () => void;
@@ -22,15 +20,13 @@ export default function CountUp({
   delay = 0,
   duration = 2,
   className = "",
-  startWhen = true,
   separator = "",
   onStart,
   onEnd,
 }: CountUpProps) {
   const ref = useRef<HTMLSpanElement>(null);
-  const motionValue = useMotionValue(direction === "down" ? to : from);
-
-  const isInView = true; // Если хочешь, можно добавить useInView
+  const hasAnimated = useRef(false);
+  const [shouldAnimate, setShouldAnimate] = useState(false);
 
   const getDecimalPlaces = (num: number): number => {
     const str = num.toString();
@@ -53,14 +49,32 @@ export default function CountUp({
     return separator ? formatted.replace(/,/g, separator) : formatted;
   };
 
+  // Проверяем, это перезагрузка страницы (F5)
   useEffect(() => {
-    if (ref.current) {
-      ref.current.textContent = String(direction === "down" ? to : from);
-    }
-  }, [from, to, direction]);
+    const navigationType = performance.getEntriesByType(
+      "navigation"
+    )[0] as PerformanceNavigationTiming;
 
+    // Анимация только при reload (F5) или первой загрузке
+    if (
+      navigationType &&
+      (navigationType.type === "reload" || navigationType.type === "navigate")
+    ) {
+      setShouldAnimate(true);
+    } else {
+      // Клиентский переход - показываем сразу конечное значение
+      const endValue = direction === "down" ? from : to;
+      if (ref.current) {
+        ref.current.textContent = formatNumber(endValue);
+      }
+    }
+  }, []);
+
+  // Анимация счетчика
   useEffect(() => {
-    if (isInView && startWhen) {
+    if (shouldAnimate && !hasAnimated.current) {
+      hasAnimated.current = true;
+
       if (typeof onStart === "function") onStart();
 
       const startValue = direction === "down" ? to : from;
@@ -69,41 +83,40 @@ export default function CountUp({
 
       const step = (currentTime: number) => {
         const elapsed = (currentTime - startTime) / 1000;
-        const t = Math.min(elapsed / duration, 1); // 0 → 1
-        const value = startValue + (endValue - startValue) * t;
-        motionValue.set(value);
 
-        if (t < 1) {
+        if (elapsed < 0) {
+          requestAnimationFrame(step);
+          return;
+        }
+
+        const progress = Math.min(elapsed / duration, 1);
+        const currentValue = startValue + (endValue - startValue) * progress;
+
+        if (ref.current) {
+          ref.current.textContent = formatNumber(currentValue);
+        }
+
+        if (progress < 1) {
           requestAnimationFrame(step);
         } else {
-          motionValue.set(endValue); // зафиксировать число точно
+          if (ref.current) {
+            ref.current.textContent = formatNumber(endValue);
+          }
           if (typeof onEnd === "function") onEnd();
         }
       };
 
       requestAnimationFrame(step);
     }
-  }, [
-    isInView,
-    startWhen,
-    direction,
-    from,
-    to,
-    delay,
-    duration,
-    motionValue,
-    onStart,
-    onEnd,
-  ]);
+  }, [shouldAnimate, direction, from, to, delay, duration, onStart, onEnd]);
 
+  // Если не должна быть анимация, показываем сразу конечное значение
   useEffect(() => {
-    const unsubscribe = motionValue.on("change", (latest) => {
-      if (ref.current) {
-        ref.current.textContent = formatNumber(latest);
-      }
-    });
-    return () => unsubscribe();
-  }, [motionValue, separator, maxDecimals]);
+    if (!shouldAnimate && ref.current) {
+      const endValue = direction === "down" ? from : to;
+      ref.current.textContent = formatNumber(endValue);
+    }
+  }, [shouldAnimate, from, to, direction]);
 
   return (
     <span

@@ -46,10 +46,25 @@ const CreateProduct: FC = () => {
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
 
+  const [tagsList, setTagsList] = useState<string[]>([]);
+  const [currentTag, setCurrentTag] = useState("");
+
   // Хлебные крошки для категорий
   const [categoryPath, setCategoryPath] = useState<number[]>([]);
 
   const selectedCategoryId = categoryPath[categoryPath.length - 1] || 0;
+
+  const addTag = () => {
+    const tag = currentTag.trim();
+    if (tag && !tagsList.includes(tag) && tagsList.length < 5) {
+      setTagsList([...tagsList, tag]);
+      setCurrentTag("");
+    }
+  };
+
+  const removeTag = (tag: string) => {
+    setTagsList(tagsList.filter((t) => t !== tag));
+  };
 
   // Получаем текущие подкатегории
   const currentSubcategories = useMemo(() => {
@@ -154,7 +169,7 @@ const CreateProduct: FC = () => {
           (toast.error("Выберите размеры и цвета"), false)
         );
       case 6:
-        const ok = await trigger(["price", "stockCount"]);
+        const ok = await trigger(["price", "stockCount", "tags"]);
         if (!ok) return false;
         if (getValues("newPrice")! >= getValues("price")) {
           toast.error("Цена со скидкой должна быть ниже обычной");
@@ -205,21 +220,11 @@ const CreateProduct: FC = () => {
       formData.append("newPrice", String(data.newPrice));
     formData.append("stockCount", String(data.stockCount));
 
-    // sizes и colors как массив строк
     formData.append("sizes", JSON.stringify(selectedSizes));
     formData.append("colors", JSON.stringify(selectedColors));
 
-    // tags как массив строк
-    if (data.tags) {
-      formData.append(
-        "tags",
-        JSON.stringify(
-          data.tags
-            .split(",")
-            .map((t) => t.trim())
-            .filter(Boolean)
-        )
-      );
+    if (tagsList.length > 0) {
+      formData.append("tags", JSON.stringify(tagsList));
     }
 
     selectedFiles.forEach((f) => formData.append("files", f));
@@ -453,6 +458,37 @@ const CreateProduct: FC = () => {
                   })}
                   placeholder="Описание товара"
                 />
+
+                <div className={scss.section}>
+                  <h3>Теги (макс. 5)</h3>
+                  <div className={scss.tagsInputWrapper}>
+                    <input
+                      type="text"
+                      placeholder="Введите тег и нажмите Enter"
+                      value={currentTag}
+                      onChange={(e) => setCurrentTag(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addTag();
+                        }
+                      }}
+                    />
+                    <button type="button" onClick={addTag}>
+                      Добавить
+                    </button>
+                  </div>
+                  <div className={scss.tagsList}>
+                    {tagsList.map((t) => (
+                      <div key={t} className={scss.tagItem}>
+                        {t}{" "}
+                        <button type="button" onClick={() => removeTag(t)}>
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
 

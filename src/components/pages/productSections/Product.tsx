@@ -4,6 +4,7 @@ import { FC, useState } from "react";
 import scss from "./Product.module.scss";
 import { useGetProduct, useUpdateProduct } from "@/api/product";
 import { useForm } from "react-hook-form";
+import EditProductModal from "./product/EditProductModal";
 
 interface ProductUpdate {
   id: number;
@@ -26,8 +27,7 @@ const Product: FC = () => {
     null
   );
 
-  const { register, handleSubmit, reset, setValue, watch } =
-    useForm<ProductUpdate>();
+  const { reset, watch } = useForm<ProductUpdate>();
 
   const watchTags = watch("tags", []);
 
@@ -51,16 +51,22 @@ const Product: FC = () => {
     reset();
   };
 
-  const onSubmit = async (data: ProductUpdate) => {
+  const onSubmit = async (data: {
+    title: string;
+    description: string;
+    newPrice?: number | null;
+    stockCount: number;
+    tags: string[];
+  }) => {
     if (!editingProduct) return;
 
-    // Отправляем только то, что можно менять
     await updateProduct({
       id: editingProduct.id,
       data: {
         title: data.title.trim(),
         description: data.description.trim(),
         newPrice: data.newPrice || null,
+
         tags: data.tags,
         stockCount: data.stockCount || 0,
       },
@@ -100,7 +106,7 @@ const Product: FC = () => {
                   <h3 className={scss.productTitle}>{item.title}</h3>
 
                   <div className={scss.price}>
-                    {item.newPrice !== null ? (
+                    {item.newPrice !== null && item.newPrice !== 0 ? (
                       item.newPrice! < item.price ? (
                         <>
                           <span className={scss.currentPrice}>
@@ -144,98 +150,12 @@ const Product: FC = () => {
         </div>
       </section>
       {editingProduct && (
-        <div className={scss.modalOverlay} onClick={closeModal}>
-          <div className={scss.modal} onClick={(e) => e.stopPropagation()}>
-            <div className={scss.modalHeader}>
-              <h2 className={scss.modalTitle}>Редактировать товар</h2>
-            </div>
-
-            <form onSubmit={handleSubmit(onSubmit)} className={scss.modalBody}>
-              <div className={scss.formGroup}>
-                <label className={scss.label}>Название товара *</label>
-                <input
-                  className={scss.input}
-                  {...register("title", { required: true })}
-                  placeholder="Например: Кроссовки Nike Air Max"
-                />
-              </div>
-
-              <div className={scss.formGroup}>
-                <label className={scss.label}>Описание</label>
-                <textarea
-                  className={scss.textarea}
-                  rows={5}
-                  {...register("description")}
-                  placeholder="Расскажите о товаре: материал, особенности, для кого..."
-                />
-              </div>
-
-              <div className={scss.formGroup}>
-                <label className={scss.label}>
-                  Цена со скидкой (необязательно)
-                </label>
-                <input
-                  type="number"
-                  step="1"
-                  className={scss.input}
-                  placeholder="Оставьте пустым, если нет скидки"
-                  {...register("newPrice", { valueAsNumber: true })}
-                />
-              </div>
-
-              <div className={scss.formGroup}>
-                <label className={scss.label}>Количество на складе *</label>
-                <input
-                  type="number"
-                  step="1"
-                  className={scss.input}
-                  {...register("stockCount", {
-                    required: true,
-                    valueAsNumber: true,
-                    min: 0,
-                  })}
-                  placeholder="Количество доступных единиц товара"
-                />
-              </div>
-
-              <div className={scss.formGroup}>
-                <label className={scss.label}>Теги (через запятую)</label>
-                <input
-                  className={scss.input}
-                  value={Array.isArray(watchTags) ? watchTags.join(", ") : ""}
-                  onChange={(e) =>
-                    setValue(
-                      "tags",
-                      e.target.value
-                        .split(",")
-                        .map((t) => t.trim())
-                        .filter(Boolean)
-                    )
-                  }
-                  placeholder="новинка, лето, хит, акция"
-                />
-              </div>
-            </form>
-
-            <div className={scss.modalFooter}>
-              <button
-                type="button"
-                onClick={closeModal}
-                className={`${scss.btn} ${scss.btnSecondary}`}
-              >
-                Отмена
-              </button>
-              <button
-                type="submit"
-                disabled={isPending}
-                onClick={handleSubmit(onSubmit)}
-                className={`${scss.btn} ${scss.btnPrimary}`}
-              >
-                {isPending ? "Сохраняется..." : "Сохранить изменения"}
-              </button>
-            </div>
-          </div>
-        </div>
+        <EditProductModal
+          product={editingProduct}
+          isPending={isPending}
+          onClose={closeModal}
+          onSave={onSubmit}
+        />
       )}
     </>
   );
